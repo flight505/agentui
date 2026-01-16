@@ -1,0 +1,44 @@
+# Weather Skill Configuration
+name: weather
+description: Get weather information and forecasts
+version: 1.0.0
+
+# Tool definitions
+tools:
+  - name: get_weather
+    description: Get current weather for a city
+    parameters:
+      type: object
+      properties:
+        city:
+          type: string
+          description: City name (e.g., 'Copenhagen', 'New York')
+        units:
+          type: string
+          enum: [celsius, fahrenheit]
+          default: celsius
+          description: Temperature units
+      required:
+        - city
+
+  - name: get_forecast
+    description: Get weather forecast for upcoming days
+    parameters:
+      type: object
+      properties:
+        city:
+          type: string
+          description: City name
+        days:
+          type: integer
+          minimum: 1
+          maximum: 7
+          default: 3
+          description: Number of days to forecast
+      required:
+        - city
+
+# Optional configuration
+config:
+  api_url: https://api.weather.example.com
+  cache_ttl: 300  # 5 minutes

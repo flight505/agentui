@@ -1,0 +1,55 @@
+# Example Agent Application
+# This is a demonstration of the app manifest format
+
+name: example-agent
+version: 1.0.0
+description: A demonstration agent with weather capabilities
+
+display_name: "Example Agent"
+icon: 🌤️
+tagline: "Your friendly weather assistant"
+
+# Provider configuration
+providers:
+  default: claude
+  
+  claude:
+    model: claude-sonnet-4-5-20250929
+    max_tokens: 4096
+  
+  openai:
+    model: gpt-4o
+
+# Skills (directories containing SKILL.md + skill.yaml)
+skills:
+  - ./skills/weather
+
+# System prompt
+system_prompt: |
+  You are a friendly and helpful AI assistant.
+  
+  You can help users with:
+  - Weather information and forecasts
+  - General questions and conversation
+  
+  Be concise and friendly. Use the available tools when appropriate.
+  When showing data, use tables or formatted output for clarity.
+
+# UI configuration
+ui:
+  theme: catppuccin-mocha
+  
+  # Welcome screen
+  welcome:
+    title: "Welcome to Example Agent"
+    subtitle: "AI-powered weather and more"
+    features:
+      - "🌤️ Current weather for any city"
+      - "📅 Multi-day weather forecasts"
+      - "💬 Natural conversation"
+      - "🎨 Beautiful terminal UI"
+
+# Output configuration
+output:
+  directory: ./outputs
+  format: "{date}_{name}"
