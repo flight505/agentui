@@ -97,7 +97,7 @@ uv run python examples/generative_ui_demo.py
 - `internal/app/app.go`: Main Bubbletea model (Elm architecture)
 - `internal/protocol/`: JSON protocol reading/writing, message dispatch
 - `internal/ui/views/`: UI component renderers (forms, tables, chat, progress)
-- `internal/theme/`: Theme system with Catppuccin, Dracula, Nord, etc.
+- `internal/theme/`: Theme system with Charm aesthetic (CharmDark/CharmLight/CharmAuto as default)
 
 **Key Design Patterns:**
 - Everything is a Bubbletea model with Update/View pattern
@@ -178,3 +178,33 @@ Skills auto-load from manifest `skills:` list. See `examples/skills/weather/` fo
 - **Protocol is line-delimited**: Each message must be single line JSON
 - **IDs are required for requests**: Use `create_request()` which auto-generates UUID
 - **Type hints required**: Project uses mypy strict mode (`disallow_untyped_defs = true`)
+
+## Theme & Aesthetic Direction
+
+**IMPORTANT**: The aesthetic goal is to match the Charmbracelet style (Glow, Mods, Huh, etc.).
+
+**Primary Themes (built-in):**
+- `CharmDark` - Signature pink/purple/teal on dark (DEFAULT)
+- `CharmLight` - Purple-focused light variant
+- `CharmAuto` - Auto-detects terminal background
+
+**Charm Signature Colors:**
+```go
+CharmPurple = "#7D56F4"   // The iconic Charm purple
+CharmPink   = "212"       // ANSI 212 (~#ff87d7)
+CharmTeal   = "35"        // ANSI 35 (~#00af5f)
+```
+
+**DO NOT:**
+- Implement Sage, Obsidian, Zephyr, Ember themes (archived direction)
+- Bundle many community themes by default
+- Use `CompleteAdaptiveColor` everywhere (simple `lipgloss.Color` is fine)
+
+**Theme System:**
+- `internal/theme/theme.go`: Core types with `TerminalColor` interface
+- `internal/theme/charm.go`: CharmDark, CharmLight, CharmAuto
+- `internal/theme/community_themes.go`: Opt-in Catppuccin, Dracula, Nord, Tokyo Night
+- `internal/theme/loader.go`: JSON theme loading for extensibility
+- Users create themes via JSON in `themes/` directory
+
+**For Implementation Plans**: See `docs/plans/README.md` - only follow the ACTIVE plan.
