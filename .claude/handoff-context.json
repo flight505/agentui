@@ -1,0 +1,22 @@
+{
+  "version": "2.0.0",
+  "handoff_time": "2026-01-17T00:00:00Z",
+  "mode": "fresh_start",
+  "features": {
+    "semantic_memory": true,
+    "adaptive_retry": true,
+    "parallel_execution": false,
+    "max_workers": 1
+  },
+  "execution_plan": {
+    "note": "REGENERATE from feature_list.json - Charm aesthetic direction",
+    "status": "needs_planning"
+  },
+  "session_count": 0,
+  "status": "reset",
+  "direction_change": {
+    "from": "Sage/Obsidian/Zephyr/Ember themes with CompleteAdaptiveColor",
+    "to": "CharmDark/CharmLight/CharmAuto themes with simple Color types",
+    "rationale": "Focus on authentic Charm aesthetic first, make extensible for community themes"
+  }
+}

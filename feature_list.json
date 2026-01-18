@@ -1,0 +1,277 @@
+[
+  {
+    "id": "theme-0.1",
+    "title": "Type System Refactor - TerminalColor Interface",
+    "description": "Refactor Colors struct to use lipgloss.TerminalColor interface instead of lipgloss.Color. This enables adaptive colors, complete colors, and any future color type.",
+    "status": "complete",
+    "priority": "critical",
+    "phase": "0-foundation",
+    "acceptance_criteria": [
+      "Colors struct fields use lipgloss.TerminalColor",
+      "BuildStyles() works with TerminalColor interface",
+      "No compilation errors",
+      "Existing simple Color values still work"
+    ],
+    "files": [
+      "internal/theme/theme.go"
+    ],
+    "dependencies": []
+  },
+  {
+    "id": "theme-0.2",
+    "title": "Implement Charm Theme (Dark/Light/Auto)",
+    "description": "Create CharmDark, CharmLight, and CharmAuto themes based on authentic Charmbracelet aesthetic. Pink/purple/teal signature palette with rounded borders.",
+    "status": "complete",
+    "priority": "critical",
+    "phase": "0-foundation",
+    "acceptance_criteria": [
+      "CharmDark theme with ANSI 212 pink primary",
+      "CharmLight theme with purple primary",
+      "CharmAuto with AdaptiveColor for auto-detection",
+      "All themes registered and set CharmDark as default"
+    ],
+    "files": [
+      "internal/theme/charm.go"
+    ],
+    "dependencies": ["theme-0.1"]
+  },
+  {
+    "id": "theme-0.3",
+    "title": "Theme JSON Loader for Extensibility",
+    "description": "Create JSON-based theme loader so users can contribute themes without writing Go code. Support loading from files, directories, and environment variable.",
+    "status": "complete",
+    "priority": "high",
+    "phase": "0-foundation",
+    "acceptance_criteria": [
+      "LoadThemeFromFile() and LoadThemeFromJSON() implemented",
+      "LoadThemesFromDirectory() for bulk loading",
+      "LoadThemeFromEnv() for AGENTUI_THEME variable",
+      "ExportThemeToJSON() for theme development"
+    ],
+    "files": [
+      "internal/theme/loader.go",
+      "themes/cyberpunk.json",
+      "themes/README.md"
+    ],
+    "dependencies": ["theme-0.1"]
+  },
+  {
+    "id": "theme-0.4",
+    "title": "Move Community Themes to Opt-in",
+    "description": "Refactor Catppuccin, Dracula, Nord, Tokyo Night themes into community_themes.go with RegisterCommunityThemes() function. Not loaded by default.",
+    "status": "complete",
+    "priority": "medium",
+    "phase": "0-foundation",
+    "acceptance_criteria": [
+      "community_themes.go with all classic themes",
+      "RegisterCommunityThemes() function",
+      "Themes have proper metadata (ID, Name, Description, Author, Version)",
+      "Old themes.go removed/deprecated"
+    ],
+    "files": [
+      "internal/theme/community_themes.go"
+    ],
+    "dependencies": ["theme-0.1"]
+  },
+  {
+    "id": "ui-1.1",
+    "title": "Complete Progress View with Steps",
+    "description": "Implement full progress view component with step tracking, status icons (✓ complete, ● running, ○ pending, ✗ error), and percentage-based progress bar.",
+    "status": "pending",
+    "priority": "high",
+    "phase": "1-ui-primitives",
+    "acceptance_criteria": [
+      "ProgressView supports message, percent, and steps",
+      "Step icons use semantic colors",
+      "Progress bar renders with block characters",
+      "Protocol handler wired up"
+    ],
+    "files": [
+      "internal/ui/views/views.go",
+      "internal/protocol/handler.go"
+    ],
+    "dependencies": ["theme-0.2"]
+  },
+  {
+    "id": "ui-1.2",
+    "title": "Complete Table View Component",
+    "description": "Implement table view with title, columns, rows, footer, dynamic column width calculation, and alternating row styling using Charm aesthetic.",
+    "status": "pending",
+    "priority": "high",
+    "phase": "1-ui-primitives",
+    "acceptance_criteria": [
+      "TableView calculates column widths dynamically",
+      "Header row uses bold + Primary color",
+      "Alternating row backgrounds",
+      "Footer text uses TextMuted color"
+    ],
+    "files": [
+      "internal/ui/views/views.go",
+      "internal/protocol/handler.go"
+    ],
+    "dependencies": ["theme-0.2"]
+  },
+  {
+    "id": "ui-1.3",
+    "title": "Complete Code View with Syntax Highlighting",
+    "description": "Implement code block view with Chroma v2 syntax highlighting, language detection, and Charm-style border treatment.",
+    "status": "pending",
+    "priority": "high",
+    "phase": "1-ui-primitives",
+    "acceptance_criteria": [
+      "Chroma v2 dependency added",
+      "Syntax highlighting for common languages",
+      "Fallback to plain text",
+      "RoundedBorder with Surface background"
+    ],
+    "files": [
+      "internal/ui/views/views.go",
+      "go.mod"
+    ],
+    "dependencies": ["theme-0.2"]
+  },
+  {
+    "id": "animation-1.4",
+    "title": "Add Harmonica Spring Physics",
+    "description": "Integrate charmbracelet/harmonica for smooth spring-based animations in modals, dialogs, and transitions.",
+    "status": "pending",
+    "priority": "medium",
+    "phase": "1-ui-primitives",
+    "acceptance_criteria": [
+      "harmonica dependency added",
+      "SpringState helper created",
+      "Modal/dialog animations use spring physics",
+      "Animation timing within 100-500ms"
+    ],
+    "files": [
+      "internal/animation/spring.go",
+      "go.mod"
+    ],
+    "dependencies": []
+  },
+  {
+    "id": "skills-2.1",
+    "title": "Implement SKILL.md Loader",
+    "description": "Create skill loading system that reads SKILL.md (instructions) and skill.yaml (tool definitions) from skill directories.",
+    "status": "pending",
+    "priority": "high",
+    "phase": "2-skills-system",
+    "acceptance_criteria": [
+      "load_skill() and load_skills_from_manifest() implemented",
+      "Skill class stores name, instructions, tools",
+      "Graceful error handling for missing files",
+      "Tests pass"
+    ],
+    "files": [
+      "src/agentui/skills/loader.py",
+      "tests/test_skills.py"
+    ],
+    "dependencies": []
+  },
+  {
+    "id": "skills-2.2",
+    "title": "Integrate Skills into AgentApp",
+    "description": "Wire up skills loading into AgentApp constructor. Load skills from manifest, inject instructions into system prompt.",
+    "status": "pending",
+    "priority": "high",
+    "phase": "2-skills-system",
+    "acceptance_criteria": [
+      "AgentApp loads skills from manifest",
+      "Skill instructions injected into system prompt",
+      "Skill tools registered"
+    ],
+    "files": [
+      "src/agentui/app.py",
+      "src/agentui/types.py"
+    ],
+    "dependencies": ["skills-2.1"]
+  },
+  {
+    "id": "agent-3.1",
+    "title": "Implement Full Tool Execution Pipeline",
+    "description": "Complete tool execution system with async/sync handler support, confirmation prompts, and multi-turn tool calling loop.",
+    "status": "pending",
+    "priority": "critical",
+    "phase": "3-agent-loop",
+    "acceptance_criteria": [
+      "execute_tool() method implemented",
+      "Tool confirmation support",
+      "Tool calling loop with max iterations",
+      "Tool results added to context"
+    ],
+    "files": [
+      "src/agentui/core.py",
+      "tests/test_tool_execution.py"
+    ],
+    "dependencies": ["skills-2.2"]
+  },
+  {
+    "id": "provider-4.1",
+    "title": "Add Google Gemini Provider",
+    "description": "Implement Gemini provider with streaming support, tool calling, and proper error handling.",
+    "status": "pending",
+    "priority": "medium",
+    "phase": "4-providers",
+    "acceptance_criteria": [
+      "GeminiProvider class implemented",
+      "Streaming message support",
+      "Tool calling support",
+      "GOOGLE_API_KEY environment variable"
+    ],
+    "files": [
+      "src/agentui/providers/gemini.py",
+      "pyproject.toml"
+    ],
+    "dependencies": ["agent-3.1"]
+  },
+  {
+    "id": "testing-5.1",
+    "title": "Add Integration Tests",
+    "description": "Create comprehensive integration tests covering full agent flow with tool calling and skills loading.",
+    "status": "pending",
+    "priority": "medium",
+    "phase": "5-testing",
+    "acceptance_criteria": [
+      "tests/integration/ directory created",
+      "Full flow tests implemented",
+      "pytest -m integration works"
+    ],
+    "files": [
+      "tests/integration/test_full_flow.py"
+    ],
+    "dependencies": ["agent-3.1"]
+  },
+  {
+    "id": "docs-5.2",
+    "title": "Create Getting Started Documentation",
+    "description": "Write comprehensive getting started guide with installation, quick start, and theme customization.",
+    "status": "pending",
+    "priority": "medium",
+    "phase": "5-testing",
+    "acceptance_criteria": [
+      "Installation instructions",
+      "Quick start example",
+      "Theme customization guide"
+    ],
+    "files": [
+      "docs/getting-started.md"
+    ],
+    "dependencies": []
+  },
+  {
+    "id": "verification-6.1",
+    "title": "Build Verification",
+    "description": "Verify Go code compiles, tests pass, and themes render correctly across terminal types.",
+    "status": "pending",
+    "priority": "high",
+    "phase": "6-verification",
+    "acceptance_criteria": [
+      "go build ./... succeeds",
+      "go test ./... passes",
+      "CharmDark/Light/Auto render correctly",
+      "Theme extensibility works"
+    ],
+    "files": [],
+    "dependencies": ["theme-0.1", "theme-0.2", "theme-0.3", "theme-0.4"]
+  }
+]
