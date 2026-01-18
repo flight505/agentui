@@ -5,10 +5,13 @@ This is a fallback mode that activates when the main LLM provider can't load.
 It helps users troubleshoot and fix their setup, then hands off to the full agent.
 """
 
+import logging
 import os
 import subprocess
 import sys
 from collections.abc import AsyncIterator
+
+logger = logging.getLogger(__name__)
 
 
 class SetupAssistant:
@@ -145,7 +148,8 @@ Then set it:
                 checks.append(f"📦 **uv:** {result.stdout.strip()}")
             else:
                 checks.append("📦 **uv:** not found")
-        except:
+        except Exception as e:
+            logger.debug(f"Failed to check uv version: {e}")
             checks.append("📦 **uv:** not found")
 
         return "\n".join(checks)
