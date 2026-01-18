@@ -34,8 +34,8 @@ This project follows the Contributor Covenant Code of Conduct. Be respectful, in
 
 ```bash
 # Clone the repository
-git clone https://github.com/flight505/agent-ui-framework.git
-cd agent-ui-framework
+git clone https://github.com/flight505/agentui.git
+cd agentui
 
 # Install Python dependencies
 uv sync
@@ -302,8 +302,8 @@ async with managed_bridge(TUIConfig(theme="charm-dark")) as bridge:
 
 ## Questions?
 
-- **Issues**: https://github.com/flight505/agent-ui-framework/issues
-- **Discussions**: https://github.com/flight505/agent-ui-framework/discussions
+- **Issues**: https://github.com/flight505/agentui/issues
+- **Discussions**: https://github.com/flight505/agentui/discussions
 - **Email**: jesper_vang@me.com
 
 ---

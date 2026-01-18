@@ -975,7 +975,7 @@ class PerformanceTester:
 ## Contact & Collaboration
 
 **Author**: Jesper (flight505)
-**AgentUI**: https://github.com/flight505/agent-ui-framework
+**AgentUI**: https://github.com/flight505/agentui
 **Storybook Assistant**: https://github.com/flight505/storybook-assistant
 
 **Questions?** Open an issue on either repository or reach out directly.
