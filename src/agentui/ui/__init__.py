@@ -72,12 +72,6 @@ class CLIRenderer(Renderer):
     def __init__(self):
         try:
             from rich.console import Console
-            from rich.markdown import Markdown
-            from rich.panel import Panel
-            from rich.progress import Progress, SpinnerColumn, TextColumn
-            from rich.prompt import Confirm, Prompt
-            from rich.syntax import Syntax
-            from rich.table import Table
         except ImportError:
             raise ImportError("rich package required: uv add rich")
 
@@ -193,7 +187,6 @@ class CLIRenderer(Renderer):
                 return results
 
             case UIProgress():
-                from rich.progress import Progress, SpinnerColumn, TextColumn
                 # For CLI, just print the message (progress is typically non-blocking)
                 self.console.print(f"[dim]{primitive.message}[/dim]")
                 return None

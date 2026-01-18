@@ -411,17 +411,13 @@ def create_tui_app(title: str = "AgentUI", css: str | None = None):
     """
     try:
         from textual.app import App, ComposeResult
-        from textual.containers import Container, Horizontal, ScrollableContainer, Vertical
-        from textual.screen import ModalScreen
+        from textual.containers import ScrollableContainer
         from textual.widgets import (
-            Button,
             DataTable,
             Footer,
             Header,
             Input,
-            Label,
             Markdown,
-            ProgressBar,
             Static,
         )
     except ImportError:

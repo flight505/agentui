@@ -533,7 +533,6 @@ class CLIBridge:
 
         try:
             from rich.console import Console
-            from rich.live import Live
             self._console = Console()
         except ImportError:
             pass

@@ -6,7 +6,6 @@ Skills are directories containing:
 - skill.yaml: Tool definitions and configuration
 """
 
-import os
 from pathlib import Path
 from typing import Any
 
