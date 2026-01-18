@@ -292,17 +292,41 @@ class AgentCore:
             # Phase 2: Data-Driven Component Selection
             # Auto-select UI component if result is not already a UI primitive
             is_ui = tool.is_ui_tool or isinstance(
-                result, (UIForm, UIConfirm, UISelect, UIProgress, UITable, UICode, UIAlert, UIText, UIMarkdown)
+                result,
+                (
+                    UIForm,
+                    UIConfirm,
+                    UISelect,
+                    UIProgress,
+                    UITable,
+                    UICode,
+                    UIAlert,
+                    UIText,
+                    UIMarkdown,
+                ),
             )
 
             # If not a UI tool and not already a UI primitive, auto-select component
             if not is_ui and not isinstance(
-                result, (UIForm, UIConfirm, UISelect, UIProgress, UITable, UICode, UIAlert, UIText, UIMarkdown)
+                result,
+                (
+                    UIForm,
+                    UIConfirm,
+                    UISelect,
+                    UIProgress,
+                    UITable,
+                    UICode,
+                    UIAlert,
+                    UIText,
+                    UIMarkdown,
+                ),
             ):
                 # Auto-select component based on data structure
                 component_type, ui_primitive = ComponentSelector.select_component(result)
 
-                if component_type != "text" or isinstance(ui_primitive, (UITable, UICode, UIMarkdown)):
+                if component_type != "text" or isinstance(
+                    ui_primitive, (UITable, UICode, UIMarkdown)
+                ):
                     # Replace result with UI primitive
                     logger.debug(f"Auto-selected component: {component_type} for tool {tool_name}")
                     result = ui_primitive

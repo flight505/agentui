@@ -163,7 +163,9 @@ class CLIRenderer(Renderer):
 
                 for field in primitive.fields:
                     if field.field_type == "checkbox":
-                        results[field.name] = Confirm.ask(field.label, default=field.default or False)
+                        results[field.name] = Confirm.ask(
+                            field.label, default=field.default or False
+                        )
                     elif field.field_type == "select" and field.options:
                         self.console.print(f"[bold]{field.label}[/bold]")
                         for i, opt in enumerate(field.options, 1):
@@ -208,7 +210,9 @@ class CLIRenderer(Renderer):
                 return None
 
             case _:
-                self.console.print(f"[dim]Unsupported UI primitive: {type(primitive).__name__}[/dim]")
+                self.console.print(
+                    f"[dim]Unsupported UI primitive: {type(primitive).__name__}[/dim]"
+                )
                 return None
 
     async def stream_text(self, text: str) -> None:

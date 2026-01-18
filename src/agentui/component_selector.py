@@ -48,7 +48,9 @@ class ComponentSelector:
     """
 
     @staticmethod
-    def select_component(data: Any, context: dict[str, Any] | None = None) -> tuple[ComponentType, Any]:
+    def select_component(
+        data: Any, context: dict[str, Any] | None = None
+    ) -> tuple[ComponentType, Any]:
         """
         Select UI component based on data structure and optional context.
 
@@ -107,7 +109,10 @@ class ComponentSelector:
             Tuple of (component_type, ui_primitive)
         """
         # Already a UI primitive - return as-is
-        if isinstance(data, (UITable, UICode, UIForm, UIConfirm, UISelect, UIProgress, UIAlert, UIText, UIMarkdown)):
+        if isinstance(
+            data,
+            (UITable, UICode, UIForm, UIConfirm, UISelect, UIProgress, UIAlert, UIText, UIMarkdown),
+        ):
             return ("ui_primitive", data)
 
         # Dict with explicit UI hints
@@ -309,7 +314,11 @@ class ComponentSelector:
         # Count pattern matches for each language
         scores = {}
         for lang, lang_patterns in patterns.items():
-            score = sum(1 for pattern in lang_patterns if re.search(pattern, code, re.MULTILINE | re.IGNORECASE))
+            score = sum(
+                1
+                for pattern in lang_patterns
+                if re.search(pattern, code, re.MULTILINE | re.IGNORECASE)
+            )
             if score > 0:
                 scores[lang] = score
 
@@ -379,7 +388,20 @@ def prefer_component(component_type: str, language: str | None = None):
             result = func(*args, **kwargs)
 
             # If result is plain data, wrap with component hint
-            if not isinstance(result, (UITable, UICode, UIForm, UIConfirm, UISelect, UIProgress, UIAlert, UIText, UIMarkdown)):
+            if not isinstance(
+                result,
+                (
+                    UITable,
+                    UICode,
+                    UIForm,
+                    UIConfirm,
+                    UISelect,
+                    UIProgress,
+                    UIAlert,
+                    UIText,
+                    UIMarkdown,
+                ),
+            ):
                 # Add _component hint to dict results
                 if isinstance(result, dict):
                     result["_component"] = component_type

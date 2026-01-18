@@ -223,7 +223,8 @@ choice = display_select(
 2. **Use footers** for tables with partial data (e.g., "Showing 50 of 200")
 3. **Choose appropriate language** for `display_code` (enables syntax highlighting)
 4. **Set destructive=True** for confirms on dangerous operations
-5. **Use severity correctly** for alerts (success for completions, warning for cautions, error for failures)
+5. **Use severity correctly** for alerts (success for completions, warning for
+   cautions, error for failures)
 """
 
     @staticmethod
@@ -240,7 +241,10 @@ choice = display_select(
         return [
             {
                 "name": "display_table",
-                "description": "Display structured tabular data with columns and rows. Best for lists of objects, comparison data, or multi-column datasets.",
+                "description": (
+                    "Display structured tabular data with columns and rows. "
+                    "Best for lists of objects, comparison data, or multi-column datasets."
+                ),
                 "input_schema": {
                     "type": "object",
                     "properties": {
@@ -271,7 +275,10 @@ choice = display_select(
             },
             {
                 "name": "display_form",
-                "description": "Display an interactive form for collecting structured user input. Returns submitted form data.",
+                "description": (
+                    "Display an interactive form for collecting structured user input. "
+                    "Returns submitted form data."
+                ),
                 "input_schema": {
                     "type": "object",
                     "properties": {
@@ -294,7 +301,10 @@ choice = display_select(
             },
             {
                 "name": "display_code",
-                "description": "Display syntax-highlighted code or structured text. Best for source code, configs, logs, JSON, or text >100 chars.",
+                "description": (
+                    "Display syntax-highlighted code or structured text. "
+                    "Best for source code, configs, logs, JSON, or text >100 chars."
+                ),
                 "input_schema": {
                     "type": "object",
                     "properties": {
@@ -304,7 +314,10 @@ choice = display_select(
                         },
                         "language": {
                             "type": "string",
-                            "description": "Language for syntax highlighting (python, javascript, json, yaml, bash, text, etc.)"
+                            "description": (
+                                "Language for syntax highlighting "
+                                "(python, javascript, json, yaml, bash, text, etc.)"
+                            )
                         },
                         "title": {
                             "type": "string",
@@ -320,7 +333,10 @@ choice = display_select(
             },
             {
                 "name": "display_progress",
-                "description": "Display progress indicator for long-running operations. Can show percentage and multi-step progress.",
+                "description": (
+                    "Display progress indicator for long-running operations. "
+                    "Can show percentage and multi-step progress."
+                ),
                 "input_schema": {
                     "type": "object",
                     "properties": {
@@ -343,7 +359,10 @@ choice = display_select(
             },
             {
                 "name": "display_confirm",
-                "description": "Display yes/no confirmation dialog. Returns boolean indicating user choice.",
+                "description": (
+                    "Display yes/no confirmation dialog. "
+                    "Returns boolean indicating user choice."
+                ),
                 "input_schema": {
                     "type": "object",
                     "properties": {
@@ -365,7 +384,10 @@ choice = display_select(
             },
             {
                 "name": "display_alert",
-                "description": "Display notification alert with severity level (info, success, warning, error).",
+                "description": (
+                    "Display notification alert with severity level "
+                    "(info, success, warning, error)."
+                ),
                 "input_schema": {
                     "type": "object",
                     "properties": {

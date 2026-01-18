@@ -90,7 +90,11 @@ class AgentApp:
             api_key=api_key or self._get_api_key(provider),
             max_tokens=max_tokens,
             temperature=temperature,
-            system_prompt=system_prompt or self.manifest.system_prompt or "You are a helpful AI assistant.",
+            system_prompt=(
+                system_prompt
+                or self.manifest.system_prompt
+                or "You are a helpful AI assistant."
+            ),
             theme=theme,
             app_name=self.manifest.display_name or name,
             tagline=tagline or self.manifest.tagline,
