@@ -115,104 +115,142 @@ class ComponentSelector:
         ):
             return ("ui_primitive", data)
 
-        # Dict with explicit UI hints
+        # Dispatch based on data type
         if isinstance(data, dict):
-            # Handle _component override key
-            if "_component" in data:
-                return ComponentSelector._handle_component_override(data)
-
-            # Check for UI primitive patterns
-            if "columns" in data and "rows" in data:
-                return ("table", UITable(
-                    columns=data["columns"],
-                    rows=data["rows"],
-                    title=data.get("title"),
-                    footer=data.get("footer"),
-                ))
-
-            if "code" in data and "language" in data:
-                return ("code", UICode(
-                    code=data["code"],
-                    language=data["language"],
-                    title=data.get("title"),
-                    line_numbers=data.get("line_numbers", True),
-                ))
-
-            if "fields" in data:
-                return ("form", UIForm(
-                    fields=data["fields"],
-                    title=data.get("title"),
-                    description=data.get("description"),
-                ))
-
-            if "message" in data and "severity" in data:
-                return ("alert", UIAlert(
-                    message=data["message"],
-                    severity=data["severity"],
-                    title=data.get("title"),
-                ))
-
-            if "percent" in data or "steps" in data:
-                return ("progress", UIProgress(
-                    message=data.get("message", "Processing..."),
-                    percent=data.get("percent"),
-                    steps=data.get("steps"),
-                ))
-
-            if "label" in data and "options" in data:
-                return ("select", UISelect(
-                    label=data["label"],
-                    options=data["options"],
-                    default=data.get("default"),
-                ))
-
-            # Single dict with multiple keys - might be good as code (JSON)
-            if len(data) > 3:
-                return ComponentSelector._dict_to_code(data)
-
-        # List of dicts with consistent schema → Table
-        if isinstance(data, list) and len(data) > 0:
-            # Check if all items are dicts with consistent keys
-            if all(isinstance(item, dict) for item in data):
-                # Single item or consistent schema → Table
-                if len(data) == 1 or ComponentSelector._has_consistent_schema(data):
-                    return ComponentSelector._list_of_dicts_to_table(data)
-
-            # List of primitives → Simple table with single column
-            if all(isinstance(item, (str, int, float, bool)) for item in data):
-                return ("table", UITable(
-                    columns=["Items"],
-                    rows=[[str(item)] for item in data],
-                ))
-
-        # Long string analysis
+            return ComponentSelector._select_from_dict(data)
+        if isinstance(data, list):
+            return ComponentSelector._select_from_list(data)
         if isinstance(data, str):
-            # Very long string with newlines → Code block
-            if len(data) > 500 and "\n" in data:
-                language = ComponentSelector._detect_language(data)
-                return ("code", UICode(
-                    code=data,
-                    language=language,
-                ))
-
-            # Markdown patterns (headers, lists, code blocks)
-            if ComponentSelector._is_markdown(data):
-                return ("markdown", UIMarkdown(content=data))
-
-            # Code patterns in shorter strings
-            if len(data) > 100 and ComponentSelector._has_code_patterns(data):
-                language = ComponentSelector._detect_language(data)
-                return ("code", UICode(
-                    code=data,
-                    language=language,
-                ))
-
-        # Boolean → Could be used for confirmation result
+            return ComponentSelector._select_from_string(data)
         if isinstance(data, bool):
             return ("text", UIText(content=str(data)))
 
         # Fallback to text
         return ("text", UIText(content=str(data)))
+
+    @staticmethod
+    def _select_from_dict(data: dict) -> tuple[ComponentType, Any]:
+        """Select component from dictionary data."""
+        # Handle _component override key
+        if "_component" in data:
+            return ComponentSelector._handle_component_override(data)
+
+        # Check for UI primitive patterns using dict-based dispatch
+        patterns = [
+            (("columns", "rows"), ComponentSelector._dict_to_table),
+            (("code", "language"), ComponentSelector._dict_to_code_block),
+            (("fields",), ComponentSelector._dict_to_form),
+            (("message", "severity"), ComponentSelector._dict_to_alert),
+            (("percent",), ComponentSelector._dict_to_progress),
+            (("steps",), ComponentSelector._dict_to_progress),
+            (("label", "options"), ComponentSelector._dict_to_select),
+        ]
+
+        for required_keys, builder in patterns:
+            if all(key in data for key in required_keys):
+                return builder(data)
+
+        # Single dict with multiple keys - might be good as code (JSON)
+        if len(data) > 3:
+            return ComponentSelector._dict_to_code(data)
+
+        return ("text", UIText(content=str(data)))
+
+    @staticmethod
+    def _select_from_list(data: list) -> tuple[ComponentType, Any]:
+        """Select component from list data."""
+        if len(data) == 0:
+            return ("text", UIText(content="[]"))
+
+        # Check if all items are dicts with consistent keys
+        if all(isinstance(item, dict) for item in data):
+            # Single item or consistent schema → Table
+            if len(data) == 1 or ComponentSelector._has_consistent_schema(data):
+                return ComponentSelector._list_of_dicts_to_table(data)
+
+        # List of primitives → Simple table with single column
+        if all(isinstance(item, (str, int, float, bool)) for item in data):
+            return ("table", UITable(
+                columns=["Items"],
+                rows=[[str(item)] for item in data],
+            ))
+
+        return ("text", UIText(content=str(data)))
+
+    @staticmethod
+    def _select_from_string(data: str) -> tuple[ComponentType, Any]:
+        """Select component from string data."""
+        # Very long string with newlines → Code block
+        if len(data) > 500 and "\n" in data:
+            language = ComponentSelector._detect_language(data)
+            return ("code", UICode(code=data, language=language))
+
+        # Markdown patterns (headers, lists, code blocks)
+        if ComponentSelector._is_markdown(data):
+            return ("markdown", UIMarkdown(content=data))
+
+        # Code patterns in shorter strings
+        if len(data) > 100 and ComponentSelector._has_code_patterns(data):
+            language = ComponentSelector._detect_language(data)
+            return ("code", UICode(code=data, language=language))
+
+        return ("text", UIText(content=data))
+
+    @staticmethod
+    def _dict_to_table(data: dict) -> tuple[ComponentType, UITable]:
+        """Convert dict with columns/rows to table."""
+        return ("table", UITable(
+            columns=data["columns"],
+            rows=data["rows"],
+            title=data.get("title"),
+            footer=data.get("footer"),
+        ))
+
+    @staticmethod
+    def _dict_to_code_block(data: dict) -> tuple[ComponentType, UICode]:
+        """Convert dict with code/language to code block."""
+        return ("code", UICode(
+            code=data["code"],
+            language=data["language"],
+            title=data.get("title"),
+            line_numbers=data.get("line_numbers", True),
+        ))
+
+    @staticmethod
+    def _dict_to_form(data: dict) -> tuple[ComponentType, UIForm]:
+        """Convert dict with fields to form."""
+        return ("form", UIForm(
+            fields=data["fields"],
+            title=data.get("title"),
+            description=data.get("description"),
+        ))
+
+    @staticmethod
+    def _dict_to_alert(data: dict) -> tuple[ComponentType, UIAlert]:
+        """Convert dict with message/severity to alert."""
+        return ("alert", UIAlert(
+            message=data["message"],
+            severity=data["severity"],
+            title=data.get("title"),
+        ))
+
+    @staticmethod
+    def _dict_to_progress(data: dict) -> tuple[ComponentType, UIProgress]:
+        """Convert dict with percent/steps to progress."""
+        return ("progress", UIProgress(
+            message=data.get("message", "Processing..."),
+            percent=data.get("percent"),
+            steps=data.get("steps"),
+        ))
+
+    @staticmethod
+    def _dict_to_select(data: dict) -> tuple[ComponentType, UISelect]:
+        """Convert dict with label/options to select."""
+        return ("select", UISelect(
+            label=data["label"],
+            options=data["options"],
+            default=data.get("default"),
+        ))
 
     @staticmethod
     def _handle_component_override(data: dict) -> tuple[ComponentType, Any]:

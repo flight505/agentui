@@ -55,20 +55,40 @@ class ClaudeProvider:
     ) -> AsyncIterator[dict]:
         """
         Stream a message response.
-        
+
         Args:
             messages: Conversation messages
             system: System prompt
             tools: Tool definitions
-        
+
         Yields:
             Response chunks with type and content
         """
         import asyncio
 
         client = self._get_client()
+        request = self._build_request(messages, system, tools)
 
-        # Build request
+        # Stream response using sync client in executor
+        loop = asyncio.get_event_loop()
+        events = await loop.run_in_executor(
+            None, lambda: list(self._stream_sync(client, request))
+        )
+
+        # Process events and yield chunks
+        tool_state = {"current_tool": None, "current_tool_input": ""}
+
+        for event in events:
+            async for chunk in self._process_event(event, tool_state):
+                yield chunk
+
+    def _build_request(
+        self,
+        messages: list[dict],
+        system: str | None,
+        tools: list[dict] | None,
+    ) -> dict:
+        """Build request payload for Anthropic API."""
         request = {
             "model": self.model,
             "max_tokens": self.max_tokens,
@@ -81,71 +101,101 @@ class ClaudeProvider:
         if tools:
             request["tools"] = self._convert_tools(tools)
 
-        # Stream response using sync client in executor
-        # (anthropic doesn't have async streaming in all versions)
-        loop = asyncio.get_event_loop()
+        return request
 
-        def stream_sync():
-            with client.messages.stream(**request) as stream:
-                for event in stream:
-                    yield event
+    def _stream_sync(self, client, request):
+        """Synchronous streaming helper for executor."""
+        with client.messages.stream(**request) as stream:
+            for event in stream:
+                yield event
 
-        # Collect events (simpler than true async for now)
-        events = await loop.run_in_executor(None, lambda: list(stream_sync()))
+    async def _process_event(self, event, tool_state: dict) -> AsyncIterator[dict]:
+        """Process a single streaming event and yield response chunks."""
+        event_type = getattr(event, "type", None)
 
-        current_tool = None
-        current_tool_input = ""
+        if event_type == "content_block_start":
+            self._handle_content_block_start(event, tool_state)
 
-        for event in events:
-            event_type = getattr(event, "type", None)
+        elif event_type == "content_block_delta":
+            chunk = self._handle_content_block_delta(event, tool_state)
+            if chunk:
+                yield chunk
 
-            if event_type == "content_block_start":
-                block = event.content_block
-                if hasattr(block, "type"):
-                    if block.type == "tool_use":
-                        current_tool = {
-                            "id": block.id,
-                            "name": block.name,
-                        }
-                        current_tool_input = ""
+        elif event_type == "content_block_stop":
+            chunk = self._handle_content_block_stop(tool_state)
+            if chunk:
+                yield chunk
 
-            elif event_type == "content_block_delta":
-                delta = event.delta
-                if hasattr(delta, "type"):
-                    if delta.type == "text_delta":
-                        yield {"type": "text", "content": delta.text}
-                    elif delta.type == "input_json_delta":
-                        current_tool_input += delta.partial_json
+        elif event_type == "message_delta":
+            chunk = self._handle_message_delta(event)
+            if chunk:
+                yield chunk
 
-            elif event_type == "content_block_stop":
-                if current_tool:
-                    # Parse tool input
-                    import json
-                    try:
-                        tool_input = json.loads(current_tool_input) if current_tool_input else {}
-                    except json.JSONDecodeError:
-                        tool_input = {}
+    def _handle_content_block_start(self, event, tool_state: dict) -> None:
+        """Handle start of content block (e.g., tool use)."""
+        block = event.content_block
+        if hasattr(block, "type") and block.type == "tool_use":
+            tool_state["current_tool"] = {
+                "id": block.id,
+                "name": block.name,
+            }
+            tool_state["current_tool_input"] = ""
 
-                    yield {
-                        "type": "tool_use",
-                        "id": current_tool["id"],
-                        "name": current_tool["name"],
-                        "input": tool_input,
-                    }
-                    current_tool = None
-                    current_tool_input = ""
+    def _handle_content_block_delta(self, event, tool_state: dict) -> dict | None:
+        """Handle content block delta (text or tool input)."""
+        delta = event.delta
+        if not hasattr(delta, "type"):
+            return None
 
-            elif event_type == "message_stop":
-                pass
+        if delta.type == "text_delta":
+            return {"type": "text", "content": delta.text}
 
-            elif event_type == "message_delta":
-                usage = getattr(event, "usage", None)
-                if usage:
-                    yield {
-                        "type": "message_end",
-                        "input_tokens": getattr(usage, "input_tokens", 0),
-                        "output_tokens": getattr(usage, "output_tokens", 0),
-                    }
+        if delta.type == "input_json_delta":
+            tool_state["current_tool_input"] += delta.partial_json
+
+        return None
+
+    def _handle_content_block_stop(self, tool_state: dict) -> dict | None:
+        """Handle end of content block (emit tool use if applicable)."""
+        current_tool = tool_state.get("current_tool")
+        if not current_tool:
+            return None
+
+        import json
+
+        try:
+            tool_input = (
+                json.loads(tool_state["current_tool_input"])
+                if tool_state["current_tool_input"]
+                else {}
+            )
+        except json.JSONDecodeError:
+            tool_input = {}
+
+        chunk = {
+            "type": "tool_use",
+            "id": current_tool["id"],
+            "name": current_tool["name"],
+            "input": tool_input,
+        }
+
+        # Reset tool state
+        tool_state["current_tool"] = None
+        tool_state["current_tool_input"] = ""
+
+        return chunk
+
+    def _handle_message_delta(self, event) -> dict | None:
+        """Handle message delta (token usage)."""
+        usage = getattr(event, "usage", None)
+        if not usage:
+            return None
+
+        return {
+            "type": "message_end",
+            "input_tokens": getattr(usage, "input_tokens", 0),
+            "output_tokens": getattr(usage, "output_tokens", 0),
+        }
 
     def _convert_messages(self, messages: list[dict]) -> list[dict]:
         """Convert messages to Anthropic format."""

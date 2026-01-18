@@ -56,26 +56,53 @@ class OpenAIProvider:
     ) -> AsyncIterator[dict]:
         """
         Stream a message response.
-        
+
         Args:
             messages: Conversation messages
             system: System prompt
             tools: Tool definitions
-        
+
         Yields:
             Response chunks with type and content
         """
         import asyncio
 
         client = self._get_client()
+        request = self._build_request(messages, system, tools)
 
-        # Build messages with system prompt
+        # Stream response
+        loop = asyncio.get_event_loop()
+        events = await loop.run_in_executor(
+            None, lambda: list(self._stream_sync(client, request))
+        )
+
+        # Process events and yield chunks
+        state = {
+            "tool_calls": {},
+            "input_tokens": 0,
+            "output_tokens": 0,
+        }
+
+        for chunk in events:
+            async for response_chunk in self._process_chunk(chunk, state):
+                yield response_chunk
+
+        # Emit completed tool calls and message end
+        async for final_chunk in self._finalize_stream(state):
+            yield final_chunk
+
+    def _build_request(
+        self,
+        messages: list[dict],
+        system: str | None,
+        tools: list[dict] | None,
+    ) -> dict:
+        """Build request payload for OpenAI API."""
         all_messages = []
         if system:
             all_messages.append({"role": "system", "content": system})
         all_messages.extend(self._convert_messages(messages))
 
-        # Build request
         request = {
             "model": self.model,
             "max_tokens": self.max_tokens,
@@ -86,58 +113,59 @@ class OpenAIProvider:
         if tools:
             request["tools"] = self._convert_tools(tools)
 
-        # Stream response
-        loop = asyncio.get_event_loop()
+        return request
 
-        def stream_sync():
-            stream = client.chat.completions.create(**request)
-            for chunk in stream:
-                yield chunk
+    def _stream_sync(self, client, request):
+        """Synchronous streaming helper for executor."""
+        stream = client.chat.completions.create(**request)
+        for chunk in stream:
+            yield chunk
 
-        events = await loop.run_in_executor(None, lambda: list(stream_sync()))
+    async def _process_chunk(self, chunk, state: dict) -> AsyncIterator[dict]:
+        """Process a single streaming chunk and yield response chunks."""
+        delta = chunk.choices[0].delta if chunk.choices else None
 
-        # Track tool calls being built
-        tool_calls = {}
-        input_tokens = 0
-        output_tokens = 0
+        if not delta:
+            return
 
-        for chunk in events:
-            delta = chunk.choices[0].delta if chunk.choices else None
+        # Text content
+        if delta.content:
+            yield {"type": "text", "content": delta.content}
 
-            if not delta:
-                continue
+        # Tool calls
+        if delta.tool_calls:
+            self._accumulate_tool_calls(delta.tool_calls, state["tool_calls"])
 
-            # Text content
-            if delta.content:
-                yield {"type": "text", "content": delta.content}
+        # Usage info (in final chunk)
+        if chunk.usage:
+            state["input_tokens"] = chunk.usage.prompt_tokens
+            state["output_tokens"] = chunk.usage.completion_tokens
 
-            # Tool calls
-            if delta.tool_calls:
-                for tc in delta.tool_calls:
-                    idx = tc.index
+    def _accumulate_tool_calls(self, tool_call_deltas, tool_calls: dict) -> None:
+        """Accumulate streaming tool call fragments."""
+        for tc in tool_call_deltas:
+            idx = tc.index
 
-                    if idx not in tool_calls:
-                        tool_calls[idx] = {
-                            "id": tc.id or "",
-                            "name": tc.function.name if tc.function else "",
-                            "arguments": "",
-                        }
+            if idx not in tool_calls:
+                tool_calls[idx] = {
+                    "id": tc.id or "",
+                    "name": tc.function.name if tc.function else "",
+                    "arguments": "",
+                }
 
-                    if tc.id:
-                        tool_calls[idx]["id"] = tc.id
-                    if tc.function:
-                        if tc.function.name:
-                            tool_calls[idx]["name"] = tc.function.name
-                        if tc.function.arguments:
-                            tool_calls[idx]["arguments"] += tc.function.arguments
+            if tc.id:
+                tool_calls[idx]["id"] = tc.id
 
-            # Usage info (in final chunk)
-            if chunk.usage:
-                input_tokens = chunk.usage.prompt_tokens
-                output_tokens = chunk.usage.completion_tokens
+            if tc.function:
+                if tc.function.name:
+                    tool_calls[idx]["name"] = tc.function.name
+                if tc.function.arguments:
+                    tool_calls[idx]["arguments"] += tc.function.arguments
 
+    async def _finalize_stream(self, state: dict) -> AsyncIterator[dict]:
+        """Finalize stream by emitting completed tool calls and message end."""
         # Emit completed tool calls
-        for tc in tool_calls.values():
+        for tc in state["tool_calls"].values():
             try:
                 args = json.loads(tc["arguments"]) if tc["arguments"] else {}
             except json.JSONDecodeError:
@@ -153,8 +181,8 @@ class OpenAIProvider:
         # Emit message end
         yield {
             "type": "message_end",
-            "input_tokens": input_tokens,
-            "output_tokens": output_tokens,
+            "input_tokens": state["input_tokens"],
+            "output_tokens": state["output_tokens"],
         }
 
     def _convert_messages(self, messages: list[dict]) -> list[dict]:

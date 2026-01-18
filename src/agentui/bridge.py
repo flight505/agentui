@@ -220,31 +220,10 @@ class TUIBridge:
                 )
 
                 if not line:
-                    if not self._shutting_down:
-                        logger.warning("TUI process closed stdout")
-                        await self._handle_disconnect()
+                    await self._handle_closed_stdout()
                     break
 
-                line = line.strip()
-                if not line:
-                    continue
-
-                if self.config.debug:
-                    logger.debug(f"← TUI: {line[:100]}...")
-
-                try:
-                    msg = Message.from_json(line)
-                except json.JSONDecodeError as e:
-                    logger.error(f"Invalid JSON from TUI: {e}")
-                    continue
-
-                # Check for response to pending request
-                if msg.id and msg.id in self._pending_requests:
-                    future = self._pending_requests.pop(msg.id)
-                    if not future.done():
-                        future.set_result(msg.payload)
-                else:
-                    await self._event_queue.put(msg)
+                await self._process_line(line.strip())
 
             except asyncio.CancelledError:
                 break
@@ -252,6 +231,37 @@ class TUIBridge:
                 if self._running and not self._shutting_down:
                     logger.error(f"Error reading from TUI: {e}")
                 break
+
+    async def _handle_closed_stdout(self) -> None:
+        """Handle TUI process closing stdout."""
+        if not self._shutting_down:
+            logger.warning("TUI process closed stdout")
+            await self._handle_disconnect()
+
+    async def _process_line(self, line: str) -> None:
+        """Process a single line from TUI stdout."""
+        if not line:
+            return
+
+        if self.config.debug:
+            logger.debug(f"← TUI: {line[:100]}...")
+
+        try:
+            msg = Message.from_json(line)
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON from TUI: {e}")
+            return
+
+        await self._route_message(msg)
+
+    async def _route_message(self, msg: Message) -> None:
+        """Route message to pending request or event queue."""
+        if msg.id and msg.id in self._pending_requests:
+            future = self._pending_requests.pop(msg.id)
+            if not future.done():
+                future.set_result(msg.payload)
+        else:
+            await self._event_queue.put(msg)
 
     async def _write_loop(self) -> None:
         """Write messages to TUI stdin."""
