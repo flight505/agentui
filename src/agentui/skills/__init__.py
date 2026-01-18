@@ -6,8 +6,9 @@ Skills are directories containing:
 - skill.yaml: Tool definitions and configuration
 """
 
+import importlib.util
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import yaml
 
@@ -63,13 +64,15 @@ class Skill:
             with open(skill_yaml) as f:
                 config = yaml.safe_load(f) or {}
 
-            # Extract tool definitions
+            # Extract tool definitions and validate they have handlers
             for tool_def in config.get("tools", []):
+                handler = cls._validate_tool_has_handler(tool_def, path)
+
                 tools.append(ToolDefinition(
                     name=tool_def["name"],
                     description=tool_def.get("description", ""),
                     parameters=tool_def.get("parameters", {}),
-                    handler=cls._create_placeholder_handler(tool_def["name"]),
+                    handler=handler,
                 ))
 
         return cls(
@@ -81,13 +84,54 @@ class Skill:
         )
 
     @staticmethod
-    def _create_placeholder_handler(tool_name: str):
-        """Create a placeholder handler for YAML-defined tools."""
-        def handler(**kwargs):
-            return {
-                "error": f"Tool '{tool_name}' is defined in YAML but has no Python handler. "
-                         f"Override with @app.tool decorator or implement in skill.py"
-            }
+    def _validate_tool_has_handler(tool_def: dict[str, Any], skill_path: Path) -> Callable[..., Any]:
+        """
+        Validate that YAML-defined tools have corresponding Python handlers.
+
+        Args:
+            tool_def: Tool definition from YAML
+            skill_path: Path to skill directory
+
+        Returns:
+            Handler function from skill.py
+
+        Raises:
+            ValueError: If skill.py missing or handler not found
+        """
+        tool_name = tool_def["name"]
+        skill_py = skill_path / "skill.py"
+
+        if not skill_py.exists():
+            raise ValueError(
+                f"Skill '{skill_path.name}' defines tool '{tool_name}' in YAML "
+                f"but has no skill.py with handler implementation. "
+                f"Create {skill_py} with a function named '{tool_name}'"
+            )
+
+        # Import skill.py module
+        spec = importlib.util.spec_from_file_location("skill", skill_py)
+        if spec is None or spec.loader is None:
+            raise ValueError(f"Could not load {skill_py}")
+
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        # Verify handler function exists
+        if not hasattr(module, tool_name):
+            raise ValueError(
+                f"Tool '{tool_name}' defined in YAML but function not found in {skill_py}. "
+                f"Add a function named '{tool_name}' to {skill_py}"
+            )
+
+        handler = getattr(module, tool_name)
+
+        # Verify it's callable
+        if not callable(handler):
+            raise ValueError(
+                f"Tool '{tool_name}' in {skill_py} is not callable. "
+                f"It must be a function."
+            )
+
         return handler
 
     def get_system_prompt_section(self) -> str:
