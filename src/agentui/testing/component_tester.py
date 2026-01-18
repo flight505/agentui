@@ -7,7 +7,6 @@ capture ANSI output, and verify rendering without running full app.
 
 import subprocess
 import json
-import tempfile
 from pathlib import Path
 from typing import Union, Optional
 from dataclasses import dataclass
@@ -161,17 +160,15 @@ class ComponentTester:
             raise ValueError(f"Unknown component type: {type(component)}")
 
     def _render_message(self, message: dict) -> RenderResult:
-        """Render protocol message via TUI subprocess"""
-        # Create temporary file for message
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-            json.dump(message, f)
-            message_file = Path(f.name)
+        """Render protocol message via TUI subprocess in headless mode"""
+        # Create JSON message as a single line (required by protocol)
+        json_message = json.dumps(message) + "\n"
 
         try:
-            # Run TUI with message as stdin
+            # Run TUI in headless mode with message as stdin
             result = subprocess.run(
-                [str(self.tui_binary), "--theme", self.theme],
-                stdin=open(message_file),
+                [str(self.tui_binary), "--headless", "--theme", self.theme],
+                input=json_message,
                 capture_output=True,
                 text=True,
                 timeout=5  # Prevent hanging
@@ -191,9 +188,13 @@ class ComponentTester:
                 stderr="TUI rendering timed out",
                 success=False
             )
-        finally:
-            # Clean up temp file
-            message_file.unlink(missing_ok=True)
+        except FileNotFoundError:
+            return RenderResult(
+                output="",
+                exit_code=127,
+                stderr=f"TUI binary not found: {self.tui_binary}",
+                success=False
+            )
 
     def render_code(
         self,

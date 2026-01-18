@@ -58,7 +58,7 @@ class ANSIAsserter:
     def has_color_code(self, output: str, ansi_code: str) -> bool:
         """Check if specific ANSI color code is present"""
         # 256-color format: \x1b[38;5;{code}m
-        pattern = f"\x1b\\[38;5;{ansi_code}m"
+        pattern = f"\x1b[38;5;{ansi_code}m"
         return pattern in output
 
     def assert_has_color_code(
