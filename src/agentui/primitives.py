@@ -208,6 +208,31 @@ class UIMarkdown:
         return d
 
 
+@dataclass
+class UIInput:
+    """A text input field."""
+    label: str
+    default: str | None = None
+    password: bool = False
+
+    def to_dict(self) -> dict:
+        """Convert to protocol dict."""
+        d = {"label": self.label, "password": self.password}
+        if self.default:
+            d["default"] = self.default
+        return d
+
+
+@dataclass
+class UISpinner:
+    """A spinner/loading indicator."""
+    message: str
+
+    def to_dict(self) -> dict:
+        """Convert to protocol dict."""
+        return {"message": self.message}
+
+
 # --- Convenience constructors ---
 
 def text_field(
@@ -290,3 +315,19 @@ def textarea_field(
         required=required,
         placeholder=placeholder,
     )
+
+
+# Type alias for all UI primitive types
+UIPrimitive = (
+    UIForm
+    | UIConfirm
+    | UISelect
+    | UITable
+    | UICode
+    | UIProgress
+    | UIAlert
+    | UIMarkdown
+    | UIText
+    | UIInput
+    | UISpinner
+)
