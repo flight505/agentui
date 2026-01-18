@@ -13,7 +13,8 @@ Tests end-to-end integration of:
 import pytest
 import asyncio
 from unittest.mock import Mock, patch
-from agentui.core import AgentCore, AgentConfig
+from agentui.core import AgentCore
+from agentui.types import AgentConfig
 from agentui.component_catalog import ComponentCatalog
 from agentui.component_selector import ComponentSelector, prefer_component
 from agentui.layout import UILayout
