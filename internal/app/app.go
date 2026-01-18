@@ -655,6 +655,24 @@ func (m Model) handleProtocolMsg(msg *protocol.Message) (tea.Model, tea.Cmd) {
 		} else {
 			m.statusMessage = "Ready"
 		}
+
+	case protocol.TypeUpdate:
+		// Phase 3: Progressive streaming - update existing component
+		var payload protocol.UpdatePayload
+		if err := msg.ParsePayload(&payload); err != nil {
+			m.setError("Invalid update payload", err.Error(), false)
+			return m, m.listenForMessages()
+		}
+
+		// Update current progress if it exists
+		// This is the primary use case for progressive streaming
+		if m.currentProgress != nil && payload.Fields != nil {
+			if msgField, ok := payload.Fields["message"].(string); ok {
+				m.statusMessage = msgField
+			}
+			// For now, progressive updates to progress indicators work through status message
+			// Full component update implementation would require tracking component IDs
+		}
 	}
 
 	return m, m.listenForMessages()

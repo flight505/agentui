@@ -23,6 +23,7 @@ const (
 	TypeStatus   MessageType = "status"
 	TypeClear    MessageType = "clear"
 	TypeDone     MessageType = "done"
+	TypeUpdate   MessageType = "update" // Phase 3: Progressive streaming
 )
 
 // Message types from Go → Python (user events)
@@ -156,6 +157,38 @@ type ClearPayload struct {
 // DonePayload indicates agent completion.
 type DonePayload struct {
 	Summary string `json:"summary,omitempty"`
+}
+
+// UpdatePayload updates an existing component by ID (Phase 3: Progressive streaming).
+// Contains the component ID and fields to update.
+type UpdatePayload struct {
+	ID string `json:"id"`
+	// Dynamically typed fields - can contain any component updates
+	Fields map[string]any `json:"-"`
+}
+
+// UnmarshalJSON custom unmarshaller to handle dynamic fields.
+func (u *UpdatePayload) UnmarshalJSON(data []byte) error {
+	// First unmarshal into temporary map
+	var temp map[string]any
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	// Extract ID
+	if id, ok := temp["id"].(string); ok {
+		u.ID = id
+	}
+
+	// Store remaining fields
+	u.Fields = make(map[string]any)
+	for k, v := range temp {
+		if k != "id" {
+			u.Fields[k] = v
+		}
+	}
+
+	return nil
 }
 
 // --- Payload types from Go → Python ---

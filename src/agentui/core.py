@@ -22,8 +22,13 @@ from agentui.types import (
     Message,
 )
 from agentui.bridge import TUIBridge, CLIBridge, TUIConfig, create_bridge, BridgeError
-from agentui.primitives import UIForm, UIConfirm, UISelect, UIProgress, UITable, UICode
+from agentui.primitives import (
+    UIForm, UIConfirm, UISelect, UIProgress, UITable, UICode,
+    UIAlert, UIText, UIMarkdown
+)
 from agentui.protocol import MessageType
+from agentui.component_catalog import ComponentCatalog
+from agentui.component_selector import ComponentSelector
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +63,12 @@ class AgentCore:
         self._setup_assistant = None  # Fallback when provider fails
         self._running = False
         self._cancel_requested = False
+
+        # Enhance system prompt with component catalog (Phase 1: Generative UI)
+        self._enhance_system_prompt_with_catalog()
+
+        # Auto-register display_* tools (Phase 1: Generative UI)
+        self._register_display_tools()
     
     def register_tool(self, tool: ToolDefinition) -> None:
         """Register a tool for the agent to use."""
@@ -67,7 +78,134 @@ class AgentCore:
     def get_tool_schemas(self) -> list[dict]:
         """Get tool schemas for the LLM."""
         return [tool.to_schema() for tool in self.tools.values()]
-    
+
+    def _enhance_system_prompt_with_catalog(self) -> None:
+        """
+        Enhance system prompt with component catalog (Phase 1: Generative UI).
+
+        Adds LLM-friendly documentation of all available UI components,
+        usage guidelines, and selection heuristics.
+        """
+        catalog_prompt = ComponentCatalog.get_catalog_prompt()
+
+        # Append catalog to existing system prompt
+        enhanced_prompt = f"""{self.config.system_prompt}
+
+{catalog_prompt}
+"""
+        self.config.system_prompt = enhanced_prompt
+        logger.debug("Enhanced system prompt with component catalog")
+
+    def _register_display_tools(self) -> None:
+        """
+        Auto-register display_* tools for UI primitives (Phase 1: Generative UI).
+
+        Registers tools for:
+        - display_table: Show tabular data
+        - display_form: Collect user input
+        - display_code: Show syntax-highlighted code
+        - display_progress: Show progress indicators
+        - display_confirm: Ask yes/no questions
+        - display_alert: Show notifications
+        - display_select: Single-choice selection
+        """
+        tool_schemas = ComponentCatalog.get_tool_schemas()
+
+        for schema in tool_schemas:
+            tool_name = schema["name"]
+
+            # Create handler that sends UI message via bridge
+            handler = self._create_display_handler(tool_name, schema)
+
+            # Register tool
+            self.register_tool(ToolDefinition(
+                name=tool_name,
+                description=schema["description"],
+                parameters=schema["input_schema"],
+                handler=handler,
+                is_ui_tool=True,
+            ))
+
+        logger.debug(f"Auto-registered {len(tool_schemas)} display_* tools")
+
+    def _create_display_handler(self, tool_name: str, schema: dict):
+        """
+        Create handler function for a display_* tool.
+
+        The handler sends the appropriate UI message via the bridge.
+        """
+        async def handler(**kwargs):
+            if not self.bridge:
+                # No bridge available, return text representation
+                return f"[Would display {tool_name} with: {kwargs}]"
+
+            # Map tool name to message type (remove 'display_' prefix)
+            msg_type = tool_name.replace("display_", "")
+
+            # Send message via bridge
+            try:
+                if msg_type == "form":
+                    # Forms return data, use request
+                    result = await self.bridge.request_form(
+                        fields=kwargs.get("fields", []),
+                        title=kwargs.get("title"),
+                        description=kwargs.get("description"),
+                    )
+                    return result
+                elif msg_type == "confirm":
+                    # Confirms return bool, use request
+                    result = await self.bridge.request_confirm(
+                        message=kwargs["message"],
+                        title=kwargs.get("title"),
+                        destructive=kwargs.get("destructive", False),
+                    )
+                    return result
+                elif msg_type == "select":
+                    # Selects return choice, use request
+                    result = await self.bridge.request_select(
+                        label=kwargs["label"],
+                        options=kwargs["options"],
+                        default=kwargs.get("default"),
+                    )
+                    return result
+                elif msg_type == "table":
+                    await self.bridge.send_table(
+                        columns=kwargs["columns"],
+                        rows=kwargs["rows"],
+                        title=kwargs.get("title"),
+                        footer=kwargs.get("footer"),
+                    )
+                    return f"Displayed table: {kwargs.get('title', 'Table')}"
+                elif msg_type == "code":
+                    await self.bridge.send_code(
+                        code=kwargs["code"],
+                        language=kwargs.get("language", "text"),
+                        title=kwargs.get("title"),
+                    )
+                    return f"Displayed code: {kwargs.get('title', 'Code')}"
+                elif msg_type == "progress":
+                    await self.bridge.send_progress(
+                        message=kwargs["message"],
+                        percent=kwargs.get("percent"),
+                        steps=kwargs.get("steps"),
+                    )
+                    return f"Displayed progress: {kwargs['message']}"
+                elif msg_type == "alert":
+                    await self.bridge.send_alert(
+                        message=kwargs["message"],
+                        severity=kwargs.get("severity", "info"),
+                        title=kwargs.get("title"),
+                    )
+                    return f"Displayed alert: {kwargs['message']}"
+                else:
+                    return f"Unknown display type: {msg_type}"
+
+            except BridgeError as e:
+                logger.error(f"Failed to send {msg_type} message: {e}")
+                return f"Error displaying {msg_type}: {e}"
+
+        return handler
+
     async def _get_provider(self):
         """Get or create the LLM provider."""
         if self._provider is None:
@@ -144,13 +282,27 @@ class AgentCore:
                     None, lambda: tool.handler(**arguments)
                 )
             
-            # Check if it's a UI tool returning primitives
+            # Phase 2: Data-Driven Component Selection
+            # Auto-select UI component if result is not already a UI primitive
             is_ui = tool.is_ui_tool or isinstance(
-                result, (UIForm, UIConfirm, UISelect, UIProgress, UITable, UICode)
+                result, (UIForm, UIConfirm, UISelect, UIProgress, UITable, UICode, UIAlert, UIText, UIMarkdown)
             )
-            
+
+            # If not a UI tool and not already a UI primitive, auto-select component
+            if not is_ui and not isinstance(
+                result, (UIForm, UIConfirm, UISelect, UIProgress, UITable, UICode, UIAlert, UIText, UIMarkdown)
+            ):
+                # Auto-select component based on data structure
+                component_type, ui_primitive = ComponentSelector.select_component(result)
+
+                if component_type != "text" or isinstance(ui_primitive, (UITable, UICode, UIMarkdown)):
+                    # Replace result with UI primitive
+                    logger.debug(f"Auto-selected component: {component_type} for tool {tool_name}")
+                    result = ui_primitive
+                    is_ui = True
+
             logger.debug(f"Tool {tool_name} completed successfully")
-            
+
             return ToolResult(
                 tool_name=tool_name,
                 tool_id=tool_id,

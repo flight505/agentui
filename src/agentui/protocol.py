@@ -27,7 +27,8 @@ class MessageType(str, Enum):
     STATUS = "status"
     CLEAR = "clear"
     DONE = "done"
-    
+    UPDATE = "update"  # Phase 3: Progressive streaming - update existing component
+
     # Go → Python (user events)
     INPUT = "input"
     FORM_RESPONSE = "form_response"
@@ -243,6 +244,22 @@ def done_payload(summary: str | None = None) -> dict:
     if summary:
         payload["summary"] = summary
     return payload
+
+
+def update_payload(component_id: str, **updates) -> dict:
+    """
+    Create update payload for progressive streaming (Phase 3).
+
+    Used to update an existing component in-place by ID.
+
+    Args:
+        component_id: ID of component to update
+        **updates: Fields to update (e.g., percent=50, rows=[...])
+
+    Returns:
+        Payload dict with id and update fields
+    """
+    return {"id": component_id, **updates}
 
 
 # --- Message constructors ---
