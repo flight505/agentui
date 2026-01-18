@@ -1,4 +1,9 @@
+<p align="center">
+  <img src="./docs/images/agentui-hero.png" alt="AgentUI Hero" width="100%">
+</p>
+
 # AgentUI 🤖✨
+### *Pronounced "Agent TUI"*
 
 > Build beautiful AI agent applications with Charm-quality terminal interfaces
 
