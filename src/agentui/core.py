@@ -55,6 +55,7 @@ class AgentCore:
         self.state = AgentState()
         self.tools: dict[str, ToolDefinition] = {}
         self._provider = None
+        self._setup_assistant = None  # Fallback when provider fails
         self._running = False
         self._cancel_requested = False
     
@@ -238,10 +239,15 @@ class AgentCore:
             provider = await self._get_provider()
         except Exception as e:
             logger.error(f"Failed to get provider: {e}")
-            yield StreamChunk(
-                content=f"Error: Failed to initialize provider: {e}",
-                is_complete=True,
-            )
+
+            # Use setup assistant instead of failing
+            if self._setup_assistant is None:
+                from agentui.setup_assistant import SetupAssistant
+                self._setup_assistant = SetupAssistant(provider_error=str(e))
+
+            # Let setup assistant handle the conversation
+            async for response_text in self._setup_assistant.process_message(user_input):
+                yield StreamChunk(content=response_text, is_complete=True)
             return
         
         iterations = 0
