@@ -2,6 +2,7 @@
 package app
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -673,6 +674,131 @@ func (m Model) handleProtocolMsg(msg *protocol.Message) (tea.Model, tea.Cmd) {
 			// For now, progressive updates to progress indicators work through status message
 			// Full component update implementation would require tracking component IDs
 		}
+
+	case protocol.TypeLayout:
+		// Phase 5: Multi-component layouts
+		var payload protocol.LayoutPayload
+		if err := msg.ParsePayload(&payload); err != nil {
+			m.setError("Invalid layout payload", err.Error(), false)
+			return m, m.listenForMessages()
+		}
+
+		// Render layout title if present
+		var layoutContent strings.Builder
+		if payload.Title != "" {
+			titleStyle := lipgloss.NewStyle().
+				Bold(true).
+				Foreground(theme.Current.Colors.Primary).
+				MarginBottom(1)
+			layoutContent.WriteString(titleStyle.Render(payload.Title) + "\n")
+		}
+
+		if payload.Description != "" {
+			descStyle := lipgloss.NewStyle().
+				Foreground(theme.Current.Colors.TextMuted).
+				MarginBottom(1)
+			layoutContent.WriteString(descStyle.Render(payload.Description) + "\n")
+		}
+
+		// Render each component in the layout
+		// For now, render components vertically (dashboard-style horizontal layout would require more complex TUI logic)
+		for i, component := range payload.Components {
+			// Create a protocol message for each component and render it
+			componentMsg := &protocol.Message{
+				Type: protocol.MessageType(component.Type),
+			}
+
+			// Marshal the component payload back to JSON for parsing
+			componentPayloadBytes, err := json.Marshal(component.Payload)
+			if err != nil {
+				continue // Skip invalid components
+			}
+			componentMsg.Payload = componentPayloadBytes
+
+			// Render the component based on its type
+			var componentView string
+			switch component.Type {
+			case "table":
+				var tablePayload protocol.TablePayload
+				if err := componentMsg.ParsePayload(&tablePayload); err == nil {
+					// Convert columns to strings
+					cols := make([]string, len(tablePayload.Columns))
+					for j, c := range tablePayload.Columns {
+						if s, ok := c.(string); ok {
+							cols[j] = s
+						} else {
+							cols[j] = fmt.Sprintf("%v", c)
+						}
+					}
+					tableView := views.NewTableView()
+					tableView.SetTitle(tablePayload.Title)
+					tableView.SetColumns(cols)
+					tableView.SetRows(tablePayload.Rows)
+					tableView.SetFooter(tablePayload.Footer)
+					tableView.SetWidth(m.width - 4)
+					componentView = tableView.View()
+				}
+			case "code":
+				var codePayload protocol.CodePayload
+				if err := componentMsg.ParsePayload(&codePayload); err == nil {
+					codeView := views.NewCodeView()
+					codeView.SetCode(codePayload.Code)
+					codeView.SetLanguage(codePayload.Language)
+					codeView.SetTitle(codePayload.Title)
+					codeView.SetWidth(m.width - 4)
+					componentView = codeView.View()
+				}
+			case "progress":
+				var progressPayload protocol.ProgressPayload
+				if err := componentMsg.ParsePayload(&progressPayload); err == nil {
+					progressView := views.NewProgressView()
+					progressView.SetWidth(m.width - 4)
+					progressView.SetMessage(progressPayload.Message)
+					if progressPayload.Percent != nil {
+						progressView.SetPercent(*progressPayload.Percent)
+					}
+					if progressPayload.Steps != nil {
+						steps := make([]views.ProgressStep, len(progressPayload.Steps))
+						for j, s := range progressPayload.Steps {
+							steps[j] = views.ProgressStep{
+								Label:  s.Label,
+								Status: s.Status,
+								Detail: s.Detail,
+							}
+						}
+						progressView.SetSteps(steps)
+					}
+					componentView = progressView.View()
+				}
+			case "alert":
+				var alertPayload protocol.AlertPayload
+				if err := componentMsg.ParsePayload(&alertPayload); err == nil {
+					alertView := views.NewAlertView()
+					alertView.SetMessage(alertPayload.Message)
+					alertView.SetTitle(alertPayload.Title)
+					alertView.SetSeverity(alertPayload.Severity)
+					alertView.SetWidth(m.width - 4)
+					componentView = alertView.View()
+				}
+			}
+
+			if componentView != "" {
+				layoutContent.WriteString(componentView)
+				// Add spacing between components
+				if i < len(payload.Components)-1 {
+					layoutContent.WriteString("\n")
+				}
+			}
+		}
+
+		// Add the rendered layout to messages
+		m.messages = append(m.messages, Message{
+			Role:      "assistant",
+			Content:   layoutContent.String(),
+			Timestamp: time.Now(),
+		})
+		m.viewport.SetContent(m.renderMessages())
+		m.viewport.GotoBottom()
 	}
 
 	return m, m.listenForMessages()

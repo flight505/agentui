@@ -5,12 +5,14 @@ Automatically selects the optimal UI component based on:
 - Data type and structure
 - Content analysis
 - Size and complexity heuristics
+- Optional context hints (Phase 4)
 
 Inspired by CopilotKit's declarative generative UI pattern.
 """
 
 import re
-from typing import Any, Literal
+from typing import Any, Literal, Callable
+from functools import wraps
 from agentui.primitives import (
     UITable,
     UICode,
@@ -45,17 +47,63 @@ class ComponentSelector:
     """
 
     @staticmethod
-    def select_component(data: Any) -> tuple[ComponentType, Any]:
+    def select_component(data: Any, context: dict[str, Any] | None = None) -> tuple[ComponentType, Any]:
         """
-        Select UI component based on data structure.
+        Select UI component based on data structure and optional context.
+
+        Args:
+            data: Data to display
+            context: Optional context hints for better selection
+                - user_intent: What user asked for
+                - data_size: "small"|"medium"|"large"
+                - interaction_needed: bool
+                - operation_duration: float (seconds)
+
+        Returns:
+            Tuple of (component_type, ui_primitive)
+        """
+        context = context or {}
+
+        # Phase 4: Context-aware selection
+        # Check for interaction hints first
+        if context.get("interaction_needed"):
+            if isinstance(data, bool) or "yes/no" in str(data).lower():
+                return ("confirm", UIConfirm(message=str(data)))
+
+        # Check for operation duration hints
+        if context.get("operation_duration", 0) > 2.0:
+            # Long operations should show progress
+            if isinstance(data, dict) and "message" in data:
+                return ("progress", UIProgress(
+                    message=data.get("message", "Processing..."),
+                    percent=data.get("percent"),
+                ))
+
+        # Apply data size hints for lists
+        if context.get("data_size") == "large" and isinstance(data, list):
+            if len(data) > 50:
+                # Large dataset → table with footer
+                if all(isinstance(item, dict) for item in data):
+                    component_type, ui = ComponentSelector._list_of_dicts_to_table(data[:50])
+                    if isinstance(ui, UITable):
+                        ui.footer = f"Showing 50 of {len(data)} items"
+                    return (component_type, ui)
+
+        # Fall through to standard selection logic
+        return ComponentSelector._select_component_impl(data)
+
+    @staticmethod
+    def _select_component_impl(data: Any) -> tuple[ComponentType, Any]:
+        """
+        Internal implementation: Select UI component based on data structure only.
+
+        This is called after context-aware selection logic.
 
         Args:
             data: Data to display (can be dict, list, str, UI primitive, etc.)
 
         Returns:
             Tuple of (component_type, ui_primitive)
-            - component_type: Type of component selected
-            - ui_primitive: UI primitive instance or processed data
         """
         # Already a UI primitive - return as-is
         if isinstance(data, (UITable, UICode, UIForm, UIConfirm, UISelect, UIProgress, UIAlert, UIText, UIMarkdown)):
@@ -301,3 +349,54 @@ class ComponentSelector:
 
         matches = sum(1 for pattern in markdown_patterns if re.search(pattern, text, re.MULTILINE))
         return matches >= 2  # At least 2 markdown patterns
+
+
+# ===== Phase 4: Component Override Decorators =====
+
+def prefer_component(component_type: str, language: str | None = None):
+    """
+    Decorator to hint preferred component type for a tool (Phase 4).
+
+    This provides an override mechanism for cases where auto-selection
+    might not choose the optimal component.
+
+    Args:
+        component_type: Preferred component ("code", "table", "markdown", etc.)
+        language: Optional language hint for code components
+
+    Usage:
+        @app.tool("get_logs", ...)
+        @prefer_component("code", language="text")
+        def get_logs():
+            return fetch_logs()
+
+    The decorator sets metadata that can be checked during component selection.
+    """
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            result = func(*args, **kwargs)
+
+            # If result is plain data, wrap with component hint
+            if not isinstance(result, (UITable, UICode, UIForm, UIConfirm, UISelect, UIProgress, UIAlert, UIText, UIMarkdown)):
+                # Add _component hint to dict results
+                if isinstance(result, dict):
+                    result["_component"] = component_type
+                    if language:
+                        result["_language"] = language
+                # For non-dict results, wrap in dict with hint
+                else:
+                    result = {
+                        "_component": component_type,
+                        "_language": language if language else "text",
+                        "data": result
+                    }
+
+            return result
+
+        # Mark function with metadata for introspection
+        wrapper._preferred_component = component_type  # type: ignore
+        wrapper._preferred_language = language  # type: ignore
+
+        return wrapper
+    return decorator

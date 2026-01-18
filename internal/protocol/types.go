@@ -24,6 +24,7 @@ const (
 	TypeClear    MessageType = "clear"
 	TypeDone     MessageType = "done"
 	TypeUpdate   MessageType = "update" // Phase 3: Progressive streaming
+	TypeLayout   MessageType = "layout" // Phase 5: Multi-component layouts
 )
 
 // Message types from Go → Python (user events)
@@ -189,6 +190,22 @@ func (u *UpdatePayload) UnmarshalJSON(data []byte) error {
 	}
 
 	return nil
+}
+
+// LayoutComponent represents a single component within a layout (Phase 5).
+type LayoutComponent struct {
+	Type    string         `json:"type"`    // Component type (table, code, progress, alert, etc.)
+	Payload map[string]any `json:"payload"` // Component-specific payload
+	Area    string         `json:"area,omitempty"`   // Layout area hint (left, right, top, bottom, center)
+	Width   *int           `json:"width,omitempty"`  // Width hint
+	Height  *int           `json:"height,omitempty"` // Height hint
+}
+
+// LayoutPayload displays multiple components in a dashboard-style layout (Phase 5).
+type LayoutPayload struct {
+	Title       string            `json:"title,omitempty"`
+	Description string            `json:"description,omitempty"`
+	Components  []LayoutComponent `json:"components"`
 }
 
 // --- Payload types from Go → Python ---

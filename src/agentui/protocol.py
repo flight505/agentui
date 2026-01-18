@@ -28,6 +28,7 @@ class MessageType(str, Enum):
     CLEAR = "clear"
     DONE = "done"
     UPDATE = "update"  # Phase 3: Progressive streaming - update existing component
+    LAYOUT = "layout"  # Phase 5: Multi-component layouts
 
     # Go → Python (user events)
     INPUT = "input"
@@ -260,6 +261,32 @@ def update_payload(component_id: str, **updates) -> dict:
         Payload dict with id and update fields
     """
     return {"id": component_id, **updates}
+
+
+def layout_payload(
+    title: str | None = None,
+    description: str | None = None,
+    components: list[dict] | None = None,
+) -> dict:
+    """
+    Create layout payload for multi-component layouts (Phase 5).
+
+    Args:
+        title: Layout title
+        description: Layout description
+        components: List of component dicts with type, payload, area
+
+    Returns:
+        Payload dict for layout message
+    """
+    payload = {}
+    if title:
+        payload["title"] = title
+    if description:
+        payload["description"] = description
+    if components:
+        payload["components"] = components
+    return payload
 
 
 # --- Message constructors ---
