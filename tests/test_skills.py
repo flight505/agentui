@@ -274,15 +274,22 @@ def test_weather_skill_example_loads():
     assert "get_forecast" in tool_names
 
     # Verify handlers work (they return demo data)
+    import asyncio
     for tool in skill.tools:
         if tool.name == "get_weather":
             result = tool.handler(city="Copenhagen")
+            # Handler is sync, not async
+            assert not asyncio.iscoroutinefunction(tool.handler)
+            assert isinstance(result, dict)
             assert "city" in result
             assert result["city"] == "Copenhagen"
             assert "temperature" in result
 
         elif tool.name == "get_forecast":
             result = tool.handler(city="New York", days=3)
+            # Handler is sync, not async
+            assert not asyncio.iscoroutinefunction(tool.handler)
+            assert isinstance(result, dict)
             assert "city" in result
             assert result["city"] == "New York"
             assert "forecast" in result
