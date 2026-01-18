@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator
-from typing import Any
+from typing import Literal
 
 from agentui.protocol import Message
 
@@ -64,7 +64,7 @@ class BaseBridge(ABC):
     @abstractmethod
     async def send_table(
         self,
-        columns: list[str],
+        columns: list[str | dict],
         rows: list[list[str]],
         title: str | None = None,
         footer: str | None = None,
@@ -106,7 +106,7 @@ class BaseBridge(ABC):
     async def send_alert(
         self,
         message: str,
-        severity: str = "info",
+        severity: Literal["info", "success", "warning", "error"] = "info",
         title: str | None = None,
     ) -> None:
         """Show an alert notification."""

@@ -187,13 +187,14 @@ class TUIBridge(BaseBridge):
 
         # Terminate process
         if self._process:
+            process = self._process  # Capture for type safety in lambda
             try:
-                self._process.terminate()
+                process.terminate()
                 await asyncio.get_event_loop().run_in_executor(
-                    None, lambda: self._process.wait(timeout=2)
+                    None, lambda: process.wait(timeout=2)
                 )
             except subprocess.TimeoutExpired:
-                self._process.kill()
+                process.kill()
             except Exception as e:
                 logger.warning(f"Error stopping TUI process: {e}")
             finally:
