@@ -6,7 +6,6 @@ in terminal output.
 """
 
 import re
-from typing import Optional
 
 
 class ANSIAsserter:
@@ -49,7 +48,7 @@ class ANSIAsserter:
         """Check if output contains any ANSI escape sequences"""
         return '\x1b[' in output
 
-    def assert_has_ansi_codes(self, output: str, message: Optional[str] = None):
+    def assert_has_ansi_codes(self, output: str, message: str | None = None):
         """Assert that output contains ANSI codes"""
         if not self.has_ansi_codes(output):
             msg = message or "Output does not contain ANSI escape sequences"
@@ -65,7 +64,7 @@ class ANSIAsserter:
         self,
         output: str,
         ansi_code: str,
-        message: Optional[str] = None
+        message: str | None = None
     ):
         """Assert that specific ANSI color code is present"""
         if not self.has_color_code(output, ansi_code):

@@ -9,7 +9,6 @@ request pre-approved components. The catalog provides:
 - Selection heuristics for intelligent component choice
 """
 
-from typing import Any
 
 
 class ComponentCatalog:

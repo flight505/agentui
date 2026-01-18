@@ -11,20 +11,21 @@ Inspired by CopilotKit's declarative generative UI pattern.
 """
 
 import re
-from typing import Any, Literal, Callable
+from collections.abc import Callable
 from functools import wraps
-from agentui.primitives import (
-    UITable,
-    UICode,
-    UIProgress,
-    UIForm,
-    UIConfirm,
-    UISelect,
-    UIAlert,
-    UIText,
-    UIMarkdown,
-)
+from typing import Any, Literal
 
+from agentui.primitives import (
+    UIAlert,
+    UICode,
+    UIConfirm,
+    UIForm,
+    UIMarkdown,
+    UIProgress,
+    UISelect,
+    UITable,
+    UIText,
+)
 
 ComponentType = Literal[
     "table", "code", "progress", "form", "confirm",

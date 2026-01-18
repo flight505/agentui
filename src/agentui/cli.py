@@ -18,20 +18,20 @@ from pathlib import Path
 def cmd_run(args):
     """Run an agent app."""
     from agentui.app import AgentApp
-    
+
     app_path = Path(args.path)
-    
+
     if not app_path.exists():
         print(f"Error: Path not found: {app_path}", file=sys.stderr)
         sys.exit(1)
-    
+
     app = AgentApp(
         manifest=app_path,
         provider=args.provider if args.provider else None,
         model=args.model if args.model else None,
         theme=args.theme,
     )
-    
+
     asyncio.run(app.run())
 
 
@@ -39,16 +39,16 @@ def cmd_init(args):
     """Create a new agent app scaffold."""
     name = args.name
     target = Path(args.path or name)
-    
+
     if target.exists():
         print(f"Error: Directory already exists: {target}", file=sys.stderr)
         sys.exit(1)
-    
+
     # Create directory structure
     target.mkdir(parents=True)
     (target / "skills").mkdir()
     (target / "outputs").mkdir()
-    
+
     # Create app.yaml
     app_yaml = f'''# {name} - AgentUI Application
 name: {name}
@@ -89,9 +89,9 @@ ui:
 output:
   directory: ./outputs
 '''
-    
+
     (target / "app.yaml").write_text(app_yaml)
-    
+
     # Create main.py
     main_py = f'''#!/usr/bin/env python3
 """
@@ -129,9 +129,9 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 '''
-    
+
     (target / "main.py").write_text(main_py)
-    
+
     # Create README
     readme = f'''# {name}
 
@@ -172,31 +172,31 @@ def my_tool(arg1: str) -> dict:
     return {{"result": "..."}}
 ```
 '''
-    
+
     (target / "README.md").write_text(readme)
-    
+
     print(f"✨ Created new agent app: {target}")
     print()
     print("Get started:")
     print(f"  cd {target}")
-    print(f"  agentui run .")
+    print("  agentui run .")
 
 
 def cmd_quick(args):
     """Quick one-shot interaction."""
     from agentui.app import quick_chat
-    
+
     prompt = " ".join(args.prompt)
     if not prompt:
         print("Error: Please provide a prompt", file=sys.stderr)
         sys.exit(1)
-    
+
     response = asyncio.run(quick_chat(
         message=prompt,
         provider=args.provider,
         model=args.model,
     ))
-    
+
     print(response)
 
 
@@ -231,9 +231,9 @@ def main():
         action="version",
         version="agentui 0.1.0",
     )
-    
+
     subparsers = parser.add_subparsers(dest="command", help="Commands")
-    
+
     # run command
     run_parser = subparsers.add_parser("run", help="Run an agent app")
     run_parser.add_argument("path", help="Path to app directory or app.yaml")
@@ -241,30 +241,30 @@ def main():
     run_parser.add_argument("--model", "-m", help="Override model")
     run_parser.add_argument("--theme", "-t", default="charm-dark", help="UI theme")
     run_parser.set_defaults(func=cmd_run)
-    
+
     # init command
     init_parser = subparsers.add_parser("init", help="Create a new agent app")
     init_parser.add_argument("name", help="Application name")
     init_parser.add_argument("--path", help="Target directory (default: ./<name>)")
     init_parser.set_defaults(func=cmd_init)
-    
+
     # quick command
     quick_parser = subparsers.add_parser("quick", help="Quick one-shot interaction")
     quick_parser.add_argument("prompt", nargs="*", help="Prompt to send")
     quick_parser.add_argument("--provider", "-p", default="claude", help="LLM provider")
     quick_parser.add_argument("--model", "-m", help="Model name")
     quick_parser.set_defaults(func=cmd_quick)
-    
+
     # themes command
     themes_parser = subparsers.add_parser("themes", help="List available themes")
     themes_parser.set_defaults(func=cmd_themes)
-    
+
     args = parser.parse_args()
-    
+
     if not args.command:
         parser.print_help()
         sys.exit(0)
-    
+
     args.func(args)
 
 

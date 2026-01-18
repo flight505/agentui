@@ -3,32 +3,32 @@ AgentUI - Beautiful AI agent applications with Charm-quality TUIs.
 """
 
 from agentui.app import AgentApp
-from agentui.bridge import TUIBridge, CLIBridge, TUIConfig, create_bridge
+from agentui.bridge import CLIBridge, TUIBridge, TUIConfig, create_bridge
 from agentui.core import AgentCore
 from agentui.primitives import (
-    UIForm,
-    UIFormField,
-    UIProgress,
-    UIProgressStep,
-    UITable,
+    UIAlert,
     UICode,
     UIConfirm,
-    UISelect,
-    UIAlert,
-    UIText,
+    UIForm,
+    UIFormField,
     UIMarkdown,
+    UIProgress,
+    UIProgressStep,
+    UISelect,
+    UITable,
+    UIText,
 )
 from agentui.protocol import (
     Message,
     MessageType,
+    alert_payload,
+    code_payload,
+    confirm_payload,
     form_field,
     form_payload,
-    table_payload,
-    code_payload,
     progress_payload,
-    confirm_payload,
     select_payload,
-    alert_payload,
+    table_payload,
 )
 
 __version__ = "0.1.0"

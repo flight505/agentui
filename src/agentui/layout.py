@@ -5,8 +5,8 @@ Enables displaying multiple UI components in a single view, inspired by
 dashboard layouts. Components can be organized with layout hints.
 """
 
+from dataclasses import dataclass
 from typing import Any, Literal
-from dataclasses import dataclass, field
 
 
 @dataclass

@@ -13,7 +13,7 @@ import uuid
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from agentui.bridge import TUIBridge, CLIBridge
+    from agentui.bridge import CLIBridge, TUIBridge
 
 
 class UIStream:
@@ -71,8 +71,8 @@ class UIStream:
         if not self.bridge:
             return
 
-        from agentui.protocol import MessageType, update_payload
         from agentui.bridge import BridgeError
+        from agentui.protocol import MessageType, update_payload
 
         try:
             if self._current_type:
@@ -116,8 +116,8 @@ class UIStream:
         if not self.bridge:
             return
 
-        from agentui.protocol import MessageType, update_payload
         from agentui.bridge import BridgeError
+        from agentui.protocol import MessageType, update_payload
 
         try:
             if self._current_type:
@@ -161,8 +161,8 @@ class UIStream:
         if not self.bridge:
             return
 
-        from agentui.protocol import MessageType, update_payload
         from agentui.bridge import BridgeError
+        from agentui.protocol import MessageType, update_payload
 
         try:
             if self._current_type:
@@ -204,8 +204,8 @@ class UIStream:
         if not self.bridge:
             return
 
-        from agentui.protocol import MessageType, update_payload
         from agentui.bridge import BridgeError
+        from agentui.protocol import MessageType, update_payload
 
         try:
             if self._current_type:

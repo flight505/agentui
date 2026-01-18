@@ -4,21 +4,22 @@ AgentApp - High-level application wrapper.
 Provides the simple, decorator-based API for creating agents.
 """
 
-import asyncio
-import os
 import logging
+import os
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
+
 import yaml
 
+from agentui.bridge import CLIBridge, TUIBridge, TUIConfig, managed_bridge
+from agentui.core import AgentCore
 from agentui.types import (
     AgentConfig,
     AppManifest,
-    ToolDefinition,
     ProviderType,
+    ToolDefinition,
 )
-from agentui.core import AgentCore
-from agentui.bridge import TUIBridge, CLIBridge, TUIConfig, create_bridge, managed_bridge
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ class AgentApp:
         
         asyncio.run(app.run())
     """
-    
+
     def __init__(
         self,
         name: str = "agent",
@@ -73,7 +74,7 @@ class AgentApp:
         """
         if debug:
             logging.basicConfig(level=logging.DEBUG)
-        
+
         # Load manifest if provided
         if manifest:
             if isinstance(manifest, (str, Path)):
@@ -81,7 +82,7 @@ class AgentApp:
             self.manifest = manifest
         else:
             self.manifest = AppManifest(name=name)
-        
+
         # Build config from manifest and overrides
         self.config = AgentConfig(
             provider=ProviderType(provider),
@@ -94,27 +95,27 @@ class AgentApp:
             app_name=self.manifest.display_name or name,
             tagline=tagline or self.manifest.tagline,
         )
-        
+
         self._debug = debug
         self._core: AgentCore | None = None
         self._bridge: TUIBridge | CLIBridge | None = None
         self._tools: list[ToolDefinition] = []
-    
+
     def _load_manifest(self, path: str | Path) -> AppManifest:
         """Load manifest from file."""
         path = Path(path)
-        
+
         if path.is_dir():
             path = path / "app.yaml"
-        
+
         if not path.exists():
             raise FileNotFoundError(f"Manifest not found: {path}")
-        
+
         with open(path) as f:
             data = yaml.safe_load(f)
-        
+
         return AppManifest.from_dict(data)
-    
+
     def _get_api_key(self, provider: str) -> str | None:
         """Get API key from environment."""
         env_vars = {
@@ -127,7 +128,7 @@ class AgentApp:
         if not key and provider in ("claude", "openai"):
             logger.warning(f"No API key found for {provider}. Set {var_name} environment variable.")
         return key
-    
+
     def tool(
         self,
         name: str,
@@ -174,7 +175,7 @@ class AgentApp:
             logger.debug(f"Registered tool: {name}")
             return func
         return decorator
-    
+
     def ui_tool(
         self,
         name: str,
@@ -187,7 +188,7 @@ class AgentApp:
         Shorthand for @tool(..., is_ui_tool=True)
         """
         return self.tool(name, description, parameters, is_ui_tool=True)
-    
+
     async def run(self, prompt: str | None = None) -> None:
         """
         Run the agent application.
@@ -201,17 +202,17 @@ class AgentApp:
             tagline=self.config.tagline,
             debug=self._debug,
         )
-        
+
         async with managed_bridge(tui_config, fallback=True) as bridge:
             self._bridge = bridge
-            
+
             # Create core
             self._core = AgentCore(config=self.config, bridge=bridge)
-            
+
             # Register tools
             for tool in self._tools:
                 self._core.register_tool(tool)
-            
+
             # Send initial prompt if provided
             if prompt:
                 try:
@@ -222,10 +223,10 @@ class AgentApp:
                 except Exception as e:
                     logger.error(f"Error processing initial prompt: {e}")
                     await bridge.send_alert(str(e), severity="error")
-            
+
             # Run main loop
             await self._core.run_loop()
-    
+
     async def chat(self, message: str) -> str:
         """
         Send a single message and get a response.
@@ -242,11 +243,11 @@ class AgentApp:
             self._core = AgentCore(config=self.config)
             for tool in self._tools:
                 self._core.register_tool(tool)
-        
+
         response = ""
         async for chunk in self._core.process_message(message):
             response += chunk.content
-        
+
         return response
 
 

@@ -26,11 +26,11 @@ def get_provider(name: str, **kwargs):
         "claude": ClaudeProvider,
         "openai": OpenAIProvider,
     }
-    
+
     if name not in providers:
         raise ValueError(
             f"Unknown provider: {name}. "
             f"Available: {', '.join(providers.keys())}"
         )
-    
+
     return providers[name](**kwargs)

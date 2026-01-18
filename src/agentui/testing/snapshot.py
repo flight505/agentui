@@ -6,18 +6,17 @@ Captures ANSI-formatted output and compares against baselines.
 """
 
 import re
-from pathlib import Path
 from dataclasses import dataclass
-from typing import Optional
+from pathlib import Path
 
 
 @dataclass
 class SnapshotDiff:
     """Result of comparing output to snapshot"""
     matched: bool
-    baseline: Optional[str] = None
-    current: Optional[str] = None
-    changes: Optional[list[str]] = None
+    baseline: str | None = None
+    current: str | None = None
+    changes: list[str] | None = None
 
     def render(self) -> str:
         """Render diff in human-readable format"""
@@ -56,7 +55,7 @@ class ANSISnapshotter:
         >>> assert diff.matched
     """
 
-    def __init__(self, snapshot_dir: Optional[Path] = None):
+    def __init__(self, snapshot_dir: Path | None = None):
         """
         Initialize snapshotter
 

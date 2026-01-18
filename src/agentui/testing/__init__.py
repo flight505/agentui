@@ -10,9 +10,9 @@ Main classes:
     ANSIAsserter: Assertions for ANSI codes and styling
 """
 
+from .assertions import ANSIAsserter
 from .component_tester import ComponentTester
 from .snapshot import ANSISnapshotter
-from .assertions import ANSIAsserter
 
 __all__ = [
     "ComponentTester",

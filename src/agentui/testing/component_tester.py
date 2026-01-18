@@ -5,13 +5,12 @@ Like Storybook for terminal UIs: render individual components,
 capture ANSI output, and verify rendering without running full app.
 """
 
-import subprocess
 import json
-from pathlib import Path
-from typing import Union, Optional
+import subprocess
 from dataclasses import dataclass
+from pathlib import Path
 
-from ..primitives import UICode, UITable, UIProgress, UIForm, UIConfirm
+from ..primitives import UICode, UIConfirm, UIForm, UIProgress, UITable
 
 
 @dataclass
@@ -63,7 +62,7 @@ class ComponentTester:
     def __init__(
         self,
         theme: str = "charm-dark",
-        tui_binary: Optional[Path] = None,
+        tui_binary: Path | None = None,
         width: int = 80,
         height: int = 24
     ):
@@ -105,7 +104,7 @@ class ComponentTester:
 
     def render(
         self,
-        component: Union[UICode, UITable, UIProgress, UIForm, UIConfirm]
+        component: UICode | UITable | UIProgress | UIForm | UIConfirm
     ) -> RenderResult:
         """
         Render a UI component and capture output
@@ -124,7 +123,7 @@ class ComponentTester:
 
     def _component_to_protocol(
         self,
-        component: Union[UICode, UITable, UIProgress, UIForm, UIConfirm]
+        component: UICode | UITable | UIProgress | UIForm | UIConfirm
     ) -> dict:
         """Convert UI component to protocol message"""
         if isinstance(component, UICode):

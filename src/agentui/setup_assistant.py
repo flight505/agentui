@@ -6,9 +6,9 @@ It helps users troubleshoot and fix their setup, then hands off to the full agen
 """
 
 import os
-import sys
 import subprocess
-from typing import AsyncIterator
+import sys
+from collections.abc import AsyncIterator
 
 
 class SetupAssistant:

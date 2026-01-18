@@ -9,6 +9,7 @@ Skills are directories containing:
 import os
 from pathlib import Path
 from typing import Any
+
 import yaml
 
 from agentui.types import ToolDefinition
@@ -16,7 +17,7 @@ from agentui.types import ToolDefinition
 
 class Skill:
     """A loaded skill with its configuration and tools."""
-    
+
     def __init__(
         self,
         name: str,
@@ -30,7 +31,7 @@ class Skill:
         self.instructions = instructions
         self.tools = tools or []
         self.config = config or {}
-    
+
     @classmethod
     def load(cls, path: str | Path) -> "Skill":
         """
@@ -43,26 +44,26 @@ class Skill:
             Loaded Skill instance
         """
         path = Path(path)
-        
+
         if not path.is_dir():
             raise ValueError(f"Skill path must be a directory: {path}")
-        
+
         name = path.name
         instructions = ""
         config = {}
         tools = []
-        
+
         # Load SKILL.md
         skill_md = path / "SKILL.md"
         if skill_md.exists():
             instructions = skill_md.read_text()
-        
+
         # Load skill.yaml
         skill_yaml = path / "skill.yaml"
         if skill_yaml.exists():
             with open(skill_yaml) as f:
                 config = yaml.safe_load(f) or {}
-            
+
             # Extract tool definitions
             for tool_def in config.get("tools", []):
                 tools.append(ToolDefinition(
@@ -71,7 +72,7 @@ class Skill:
                     parameters=tool_def.get("parameters", {}),
                     handler=cls._create_placeholder_handler(tool_def["name"]),
                 ))
-        
+
         return cls(
             name=name,
             path=path,
@@ -79,7 +80,7 @@ class Skill:
             tools=tools,
             config=config,
         )
-    
+
     @staticmethod
     def _create_placeholder_handler(tool_name: str):
         """Create a placeholder handler for YAML-defined tools."""
@@ -89,12 +90,12 @@ class Skill:
                          f"Override with @app.tool decorator or implement in skill.py"
             }
         return handler
-    
+
     def get_system_prompt_section(self) -> str:
         """Get the system prompt section for this skill."""
         if not self.instructions:
             return ""
-        
+
         return f"""
 <skill name="{self.name}">
 {self.instructions}
@@ -104,33 +105,33 @@ class Skill:
 
 class SkillRegistry:
     """Registry for managing loaded skills."""
-    
+
     def __init__(self):
         self._skills: dict[str, Skill] = {}
-    
+
     def load(self, path: str | Path) -> Skill:
         """Load a skill and add it to the registry."""
         skill = Skill.load(path)
         self._skills[skill.name] = skill
         return skill
-    
+
     def load_all(self, paths: list[str | Path]) -> list[Skill]:
         """Load multiple skills."""
         return [self.load(p) for p in paths]
-    
+
     def get(self, name: str) -> Skill | None:
         """Get a skill by name."""
         return self._skills.get(name)
-    
+
     def all(self) -> list[Skill]:
         """Get all loaded skills."""
         return list(self._skills.values())
-    
+
     def get_combined_instructions(self) -> str:
         """Get combined instructions from all skills."""
         sections = [skill.get_system_prompt_section() for skill in self._skills.values()]
         return "\n".join(s for s in sections if s)
-    
+
     def get_all_tools(self) -> list[ToolDefinition]:
         """Get all tools from all skills."""
         tools = []

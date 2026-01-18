@@ -5,10 +5,10 @@ JSON Lines protocol over stdio.
 """
 
 import json
-from dataclasses import dataclass, field, asdict
-from typing import Any, Literal
-from enum import Enum
 import uuid
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any, Literal
 
 
 class MessageType(str, Enum):
@@ -46,7 +46,7 @@ class Message:
     type: str
     id: str | None = None
     payload: dict | None = None
-    
+
     def to_json(self) -> str:
         """Serialize to JSON line."""
         data = {"type": self.type}
@@ -55,7 +55,7 @@ class Message:
         if self.payload:
             data["payload"] = self.payload
         return json.dumps(data)
-    
+
     @classmethod
     def from_json(cls, line: str) -> "Message":
         """Deserialize from JSON line."""

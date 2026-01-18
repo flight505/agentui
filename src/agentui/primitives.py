@@ -5,7 +5,7 @@ These primitives are serialized to JSON and sent to the Go TUI for rendering.
 They can also be rendered in fallback CLI mode using Rich.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Literal
 
 
@@ -20,7 +20,7 @@ class UIFormField:
     required: bool = False
     description: str | None = None
     placeholder: str | None = None
-    
+
     def to_dict(self) -> dict:
         """Convert to protocol dict."""
         d = {
@@ -49,7 +49,7 @@ class UIForm:
     description: str | None = None
     submit_label: str = "Submit"
     cancel_label: str = "Cancel"
-    
+
     def to_dict(self) -> dict:
         """Convert to protocol dict."""
         return {
@@ -67,7 +67,7 @@ class UIProgressStep:
     label: str
     status: Literal["pending", "running", "complete", "error"] = "pending"
     detail: str | None = None
-    
+
     def to_dict(self) -> dict:
         """Convert to protocol dict."""
         d = {"label": self.label, "status": self.status}
@@ -82,7 +82,7 @@ class UIProgress:
     message: str
     percent: float | None = None
     steps: list[UIProgressStep] | None = None
-    
+
     def to_dict(self) -> dict:
         """Convert to protocol dict."""
         d = {"message": self.message}
@@ -100,7 +100,7 @@ class UITable:
     rows: list[list[str]]
     title: str | None = None
     footer: str | None = None
-    
+
     def to_dict(self) -> dict:
         """Convert to protocol dict."""
         d = {"columns": self.columns, "rows": self.rows}
@@ -118,7 +118,7 @@ class UICode:
     language: str = "text"
     title: str | None = None
     line_numbers: bool = True
-    
+
     def to_dict(self) -> dict:
         """Convert to protocol dict."""
         d = {
@@ -139,7 +139,7 @@ class UIConfirm:
     confirm_label: str = "Yes"
     cancel_label: str = "No"
     destructive: bool = False
-    
+
     def to_dict(self) -> dict:
         """Convert to protocol dict."""
         d = {
@@ -159,7 +159,7 @@ class UISelect:
     label: str
     options: list[str]
     default: str | None = None
-    
+
     def to_dict(self) -> dict:
         """Convert to protocol dict."""
         d = {"label": self.label, "options": self.options}
@@ -174,7 +174,7 @@ class UIAlert:
     message: str
     severity: Literal["info", "success", "warning", "error"] = "info"
     title: str | None = None
-    
+
     def to_dict(self) -> dict:
         """Convert to protocol dict."""
         d = {"message": self.message, "severity": self.severity}
@@ -188,7 +188,7 @@ class UIText:
     """Plain text content (for streaming)."""
     content: str
     done: bool = False
-    
+
     def to_dict(self) -> dict:
         """Convert to protocol dict."""
         return {"content": self.content, "done": self.done}
@@ -199,7 +199,7 @@ class UIMarkdown:
     """Markdown content."""
     content: str
     title: str | None = None
-    
+
     def to_dict(self) -> dict:
         """Convert to protocol dict."""
         d = {"content": self.content}
