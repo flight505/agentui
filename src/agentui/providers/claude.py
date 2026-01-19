@@ -11,7 +11,7 @@ from agentui.exceptions import ProviderError
 class ClaudeProvider:
     """
     Provider for Anthropic Claude models.
-    
+
     Supports streaming responses and tool use.
     """
 

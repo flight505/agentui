@@ -27,10 +27,10 @@ class Renderer(ABC):
     async def render(self, primitive: UIPrimitive) -> Any:
         """
         Render a UI primitive and return user response if interactive.
-        
+
         Args:
             primitive: The UI primitive to render
-            
+
         Returns:
             User response for interactive primitives, None otherwise
         """
@@ -65,7 +65,7 @@ class Renderer(ABC):
 class CLIRenderer(Renderer):
     """
     CLI renderer using Rich for styled output.
-    
+
     This is the fallback renderer for environments without full TUI support.
     """
 

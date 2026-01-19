@@ -267,7 +267,7 @@ ProgressBar > .bar--complete {
 class TUIRenderer(Renderer):
     """
     TUI renderer using Textual for Charm-like beautiful terminal UI.
-    
+
     This renderer creates rich, interactive terminal interfaces with
     forms, progress indicators, tables, and more.
     """

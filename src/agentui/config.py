@@ -4,7 +4,6 @@ import os
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 import yaml
 
@@ -40,8 +39,8 @@ class AgentConfig:
 
     # Provider settings
     provider: ProviderType = ProviderType.CLAUDE
-    model: Optional[str] = None
-    api_key: Optional[str] = None
+    model: str | None = None
+    api_key: str | None = None
     max_tokens: int = 4096
     temperature: float = 0.7
 
@@ -122,7 +121,7 @@ class TUIConfig:
     theme: str = "catppuccin-mocha"
     app_name: str = "AgentUI"
     tagline: str = "AI Agent Interface"
-    tui_path: Optional[str] = None
+    tui_path: str | None = None
     debug: bool = False
     reconnect_attempts: int = 3
     reconnect_delay: float = 1.0

@@ -5,14 +5,14 @@ import json
 import logging
 import shutil
 import subprocess
-from collections.abc import AsyncIterator, AsyncGenerator
+from collections.abc import AsyncGenerator, AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Literal
 
 from agentui.bridge.base import BaseBridge
 from agentui.config import TUIConfig
-from agentui.exceptions import BridgeError, ConnectionError, ProtocolError, ValidationError
+from agentui.exceptions import ConnectionError, ProtocolError, ValidationError
 from agentui.protocol import (
     Message,
     MessageType,

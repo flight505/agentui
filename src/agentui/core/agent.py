@@ -31,7 +31,6 @@ from agentui.core.message_handler import MessageHandler
 from agentui.core.tool_executor import ToolExecutor
 from agentui.core.ui_handler import UIHandler
 from agentui.exceptions import (
-    AgentUIError as AgentError,
     BridgeError,
     ConfigurationError,
 )

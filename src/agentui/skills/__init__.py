@@ -7,8 +7,9 @@ Skills are directories containing:
 """
 
 import importlib.util
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, cast
+from typing import Any, cast
 
 import yaml
 
@@ -37,10 +38,10 @@ class Skill:
     def load(cls, path: str | Path) -> "Skill":
         """
         Load a skill from a directory.
-        
+
         Args:
             path: Path to skill directory
-        
+
         Returns:
             Loaded Skill instance
         """

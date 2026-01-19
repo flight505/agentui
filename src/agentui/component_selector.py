@@ -111,7 +111,7 @@ class ComponentSelector:
         # Already a UI primitive - return as-is
         if isinstance(
             data,
-            (UITable, UICode, UIForm, UIConfirm, UISelect, UIProgress, UIAlert, UIText, UIMarkdown),
+            UITable | UICode | UIForm | UIConfirm | UISelect | UIProgress | UIAlert | UIText | UIMarkdown,
         ):
             return ("ui_primitive", data)
 
@@ -169,7 +169,7 @@ class ComponentSelector:
                 return ComponentSelector._list_of_dicts_to_table(data)
 
         # List of primitives → Simple table with single column
-        if all(isinstance(item, (str, int, float, bool)) for item in data):
+        if all(isinstance(item, str | int | float | bool) for item in data):
             return ("table", UITable(
                 columns=["Items"],
                 rows=[[str(item)] for item in data],
@@ -428,17 +428,7 @@ def prefer_component(component_type: str, language: str | None = None) -> Callab
             # If result is plain data, wrap with component hint
             if not isinstance(
                 result,
-                (
-                    UITable,
-                    UICode,
-                    UIForm,
-                    UIConfirm,
-                    UISelect,
-                    UIProgress,
-                    UIAlert,
-                    UIText,
-                    UIMarkdown,
-                ),
+                UITable | UICode | UIForm | UIConfirm | UISelect | UIProgress | UIAlert | UIText | UIMarkdown,
             ):
                 # Add _component hint to dict results
                 if isinstance(result, dict):

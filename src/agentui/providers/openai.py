@@ -12,7 +12,7 @@ from agentui.exceptions import ProviderError
 class OpenAIProvider:
     """
     Provider for OpenAI GPT models.
-    
+
     Supports streaming responses and tool use.
     """
 

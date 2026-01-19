@@ -10,7 +10,7 @@ from collections.abc import Callable
 from typing import Any
 
 from agentui.component_selector import ComponentSelector
-from agentui.exceptions import BridgeError, ToolExecutionError
+from agentui.exceptions import BridgeError
 from agentui.primitives import (
     UIAlert,
     UICode,
@@ -160,7 +160,7 @@ class ToolExecutor:
             component_type, ui_primitive = ComponentSelector.select_component(result)
 
             if component_type != "text" or isinstance(
-                ui_primitive, (UITable, UICode, UIMarkdown)
+                ui_primitive, UITable | UICode | UIMarkdown
             ):
                 logger.debug(
                     f"Auto-selected component: {component_type} for tool {tool_name}"

@@ -168,7 +168,7 @@ class AgentApp:
 
         # Load manifest if provided
         if manifest:
-            if isinstance(manifest, (str, Path)):
+            if isinstance(manifest, str | Path):
                 manifest = self._load_manifest(manifest)
             self.manifest = manifest
         else:
@@ -253,14 +253,14 @@ class AgentApp:
     ) -> Callable:
         """
         Decorator to register a tool.
-        
+
         Args:
             name: Tool name (used by LLM)
             description: Tool description (shown to LLM)
             parameters: JSON schema for parameters
             is_ui_tool: If True, tool returns UI primitives
             requires_confirmation: If True, asks user before executing
-        
+
         Example:
             @app.tool(
                 name="search_web",
@@ -442,7 +442,7 @@ def create_app(
     Args:
         manifest: Path to app.yaml or directory containing it
         **kwargs: Additional arguments passed to AgentApp
-    
+
     Returns:
         AgentApp instance
     """
@@ -457,13 +457,13 @@ async def quick_chat(
 ) -> str:
     """
     Quick one-shot chat without creating an app.
-    
+
     Args:
         message: User message
         provider: LLM provider
         model: Model name
         system_prompt: Optional system prompt
-    
+
     Returns:
         Assistant response
     """

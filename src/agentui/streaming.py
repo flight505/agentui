@@ -10,7 +10,8 @@ Inspired by Vercel AI SDK's streamUI with async generators.
 """
 
 import uuid
-from typing import TYPE_CHECKING, Any, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from agentui.bridge import CLIBridge, TUIBridge
@@ -293,8 +294,7 @@ class UIStream:
         Returns:
             UIProgress instance
         """
-        from agentui.primitives import UIProgress
-        from agentui.primitives import UIProgressStep
+        from agentui.primitives import UIProgress, UIProgressStep
 
         typed_steps = None
         if steps:
@@ -319,6 +319,7 @@ class UIStream:
             UIAlert instance
         """
         from typing import Literal
+
         from agentui.primitives import UIAlert
 
         # Type narrowing for severity

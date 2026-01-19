@@ -13,7 +13,6 @@ import argparse
 import asyncio
 import sys
 from pathlib import Path
-from typing import Any
 
 
 def cmd_run(args: argparse.Namespace) -> None:
@@ -62,11 +61,11 @@ tagline: "AI Agent Interface"
 
 providers:
   default: claude
-  
+
   claude:
     model: claude-sonnet-4-5-20250929
     max_tokens: 4096
-  
+
   openai:
     model: gpt-4o
 
