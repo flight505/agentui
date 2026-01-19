@@ -8,21 +8,21 @@ import asyncio
 import logging
 from collections.abc import AsyncIterator
 
-from agentui.bridge import BridgeError, CLIBridge, TUIBridge
+from agentui.bridge import CLIBridge, TUIBridge
 from agentui.component_catalog import ComponentCatalog
 from agentui.core.display_tools import DisplayToolRegistry
 from agentui.core.message_handler import MessageHandler
 from agentui.core.tool_executor import ToolExecutor
 from agentui.core.ui_handler import UIHandler
+from agentui.exceptions import (
+    AgentUIError as AgentError,
+    BridgeError,
+    ConfigurationError,
+)
 from agentui.protocol import MessageType
 from agentui.types import AgentConfig, AgentState, StreamChunk, ToolDefinition, ToolResult
 
 logger = logging.getLogger(__name__)
-
-
-class AgentError(Exception):
-    """Base exception for agent errors."""
-    pass
 
 
 class AgentCore:
@@ -135,7 +135,7 @@ class AgentCore:
                     max_tokens=self.config.max_tokens,
                 )
             else:
-                raise ValueError(f"Unsupported provider: {provider_name}")
+                raise ConfigurationError(f"Unsupported provider: {provider_name}")
 
             logger.info(f"Initialized provider: {provider_name}")
 
@@ -260,7 +260,7 @@ class AgentCore:
         Listens for user input and processes messages.
         """
         if not self.bridge:
-            raise RuntimeError("Bridge not set")
+            raise ConfigurationError("Bridge not set")
 
         self._running = True
 

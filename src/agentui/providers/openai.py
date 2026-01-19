@@ -6,6 +6,8 @@ import json
 import os
 from collections.abc import AsyncIterator
 
+from agentui.exceptions import ProviderError
+
 
 class OpenAIProvider:
     """
@@ -39,7 +41,7 @@ class OpenAIProvider:
                 )
 
             if not self.api_key:
-                raise ValueError(
+                raise ProviderError(
                     "OpenAI API key not found. "
                     "Set OPENAI_API_KEY environment variable or pass api_key."
                 )

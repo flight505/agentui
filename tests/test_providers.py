@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
+from agentui.exceptions import ProviderError
 from agentui.providers.claude import ClaudeProvider
 from agentui.providers.openai import OpenAIProvider
 
@@ -99,7 +100,7 @@ class TestClaudeProviderClient:
 
             mock_anthropic_module = MagicMock()
             with patch.dict("sys.modules", {"anthropic": mock_anthropic_module}):
-                with pytest.raises(ValueError, match="Anthropic API key not found"):
+                with pytest.raises(ProviderError, match="Anthropic API key not found"):
                     provider._get_client()
 
     def test_get_client_missing_anthropic_package(self):
@@ -537,7 +538,7 @@ class TestOpenAIProviderClient:
 
             mock_openai_module = MagicMock()
             with patch.dict("sys.modules", {"openai": mock_openai_module}):
-                with pytest.raises(ValueError, match="OpenAI API key not found"):
+                with pytest.raises(ProviderError, match="OpenAI API key not found"):
                     provider._get_client()
 
     def test_get_client_missing_openai_package(self):

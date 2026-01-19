@@ -8,8 +8,8 @@ import asyncio
 import logging
 from typing import Any
 
-from agentui.bridge import BridgeError
 from agentui.component_selector import ComponentSelector
+from agentui.exceptions import BridgeError, ToolExecutionError
 from agentui.primitives import (
     UIAlert,
     UICode,
@@ -24,11 +24,6 @@ from agentui.primitives import (
 from agentui.types import ToolDefinition, ToolResult
 
 logger = logging.getLogger(__name__)
-
-
-class ToolExecutionError(Exception):
-    """Error during tool execution."""
-    pass
 
 
 class ToolExecutor:

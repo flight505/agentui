@@ -12,6 +12,7 @@ from typing import Any, Callable
 
 import yaml
 
+from agentui.exceptions import SkillLoadError
 from agentui.types import ToolDefinition
 
 
@@ -46,7 +47,7 @@ class Skill:
         path = Path(path)
 
         if not path.is_dir():
-            raise ValueError(f"Skill path must be a directory: {path}")
+            raise SkillLoadError(f"Skill path must be a directory: {path}")
 
         name = path.name
         instructions = ""
@@ -102,7 +103,7 @@ class Skill:
         skill_py = skill_path / "skill.py"
 
         if not skill_py.exists():
-            raise ValueError(
+            raise SkillLoadError(
                 f"Skill '{skill_path.name}' defines tool '{tool_name}' in YAML "
                 f"but has no skill.py with handler implementation. "
                 f"Create {skill_py} with a function named '{tool_name}'"
@@ -111,14 +112,14 @@ class Skill:
         # Import skill.py module
         spec = importlib.util.spec_from_file_location("skill", skill_py)
         if spec is None or spec.loader is None:
-            raise ValueError(f"Could not load {skill_py}")
+            raise SkillLoadError(f"Could not load {skill_py}")
 
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
 
         # Verify handler function exists
         if not hasattr(module, tool_name):
-            raise ValueError(
+            raise SkillLoadError(
                 f"Tool '{tool_name}' defined in YAML but function not found in {skill_py}. "
                 f"Add a function named '{tool_name}' to {skill_py}"
             )
@@ -127,7 +128,7 @@ class Skill:
 
         # Verify it's callable
         if not callable(handler):
-            raise ValueError(
+            raise SkillLoadError(
                 f"Tool '{tool_name}' in {skill_py} is not callable. "
                 f"It must be a function."
             )

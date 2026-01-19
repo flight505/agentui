@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from agentui.bridge.base import BaseBridge
+from agentui.exceptions import BridgeError, ConnectionError, ProtocolError, ValidationError
 from agentui.protocol import (
     Message,
     MessageType,
@@ -33,21 +34,6 @@ from agentui.protocol import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-class BridgeError(Exception):
-    """Base exception for bridge errors."""
-    pass
-
-
-class ConnectionError(BridgeError):
-    """TUI process connection error."""
-    pass
-
-
-class ProtocolError(BridgeError):
-    """Protocol communication error."""
-    pass
 
 
 @dataclass
@@ -348,7 +334,7 @@ class TUIBridge(BaseBridge):
     async def request(self, message: Message, timeout: float = 30.0) -> Any:
         """Send a request and wait for response."""
         if not message.id:
-            raise ValueError("Request must have an ID")
+            raise ValidationError("Request must have an ID")
 
         if not self._running:
             raise ConnectionError("TUI not running")

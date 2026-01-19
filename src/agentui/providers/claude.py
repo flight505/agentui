@@ -5,6 +5,8 @@ Claude Provider - Anthropic Claude integration.
 import os
 from collections.abc import AsyncIterator
 
+from agentui.exceptions import ProviderError
+
 
 class ClaudeProvider:
     """
@@ -38,7 +40,7 @@ class ClaudeProvider:
                 )
 
             if not self.api_key:
-                raise ValueError(
+                raise ProviderError(
                     "Anthropic API key not found. "
                     "Set ANTHROPIC_API_KEY environment variable or pass api_key."
                 )

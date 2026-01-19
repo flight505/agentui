@@ -7,8 +7,8 @@ Auto-registers display_* tools for UI primitives (Generative UI Phase 1).
 import logging
 from typing import Any
 
-from agentui.bridge import BridgeError
 from agentui.component_catalog import ComponentCatalog
+from agentui.exceptions import BridgeError, ConfigurationError
 from agentui.types import ToolDefinition
 
 logger = logging.getLogger(__name__)
@@ -92,7 +92,7 @@ class DisplayToolRegistry:
         """Execute a display message based on type."""
         bridge = self.bridge
         if not bridge:
-            raise RuntimeError("Bridge not available for display messages")
+            raise ConfigurationError("Bridge not available for display messages")
 
         # Interactive messages that return data
         if msg_type == "form":

@@ -5,6 +5,17 @@ AgentUI - Beautiful AI agent applications with Charm-quality TUIs.
 from agentui.app import AgentApp
 from agentui.bridge import CLIBridge, TUIBridge, TUIConfig, create_bridge
 from agentui.core import AgentCore
+from agentui.exceptions import (
+    AgentUIError,
+    BridgeError,
+    ConfigurationError,
+    ConnectionError,
+    ProtocolError,
+    ProviderError,
+    SkillLoadError,
+    ToolExecutionError,
+    ValidationError,
+)
 from agentui.primitives import (
     UIAlert,
     UICode,
@@ -41,6 +52,16 @@ __all__ = [
     "CLIBridge",
     "TUIConfig",
     "create_bridge",
+    # Exceptions
+    "AgentUIError",
+    "BridgeError",
+    "ConnectionError",
+    "ProtocolError",
+    "ToolExecutionError",
+    "ProviderError",
+    "ConfigurationError",
+    "ValidationError",
+    "SkillLoadError",
     # UI Primitives
     "UIForm",
     "UIFormField",

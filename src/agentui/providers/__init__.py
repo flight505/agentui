@@ -2,6 +2,7 @@
 LLM Providers for AgentUI.
 """
 
+from agentui.exceptions import ProviderError
 from agentui.providers.claude import ClaudeProvider
 from agentui.providers.openai import OpenAIProvider
 
@@ -28,7 +29,7 @@ def get_provider(name: str, **kwargs):
     }
 
     if name not in providers:
-        raise ValueError(
+        raise ProviderError(
             f"Unknown provider: {name}. "
             f"Available: {', '.join(providers.keys())}"
         )

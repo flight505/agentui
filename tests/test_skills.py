@@ -3,6 +3,7 @@
 import pytest
 from pathlib import Path
 
+from agentui.exceptions import SkillLoadError
 from agentui.skills import Skill, load_skill
 
 
@@ -23,7 +24,7 @@ tools:
 """
     )
 
-    with pytest.raises(ValueError, match="has no skill.py"):
+    with pytest.raises(SkillLoadError, match="has no skill.py"):
         load_skill(skill_dir)
 
 
@@ -53,7 +54,7 @@ def wrong_name():
 """
     )
 
-    with pytest.raises(ValueError, match="function not found"):
+    with pytest.raises(SkillLoadError, match="function not found"):
         load_skill(skill_dir)
 
 
@@ -82,7 +83,7 @@ test_tool = "not a function"
 """
     )
 
-    with pytest.raises(ValueError, match="not callable"):
+    with pytest.raises(SkillLoadError, match="not callable"):
         load_skill(skill_dir)
 
 
@@ -313,7 +314,7 @@ tools:
     )
 
     # Test without skill.py
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(SkillLoadError) as exc_info:
         load_skill(skill_dir)
 
     error_msg = str(exc_info.value)
