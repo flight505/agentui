@@ -3,7 +3,25 @@ TUI Renderer using Textual - Charm-inspired beautiful terminal UI.
 """
 
 import asyncio
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from typing import Protocol
+
+    class AgentTUIApp(Protocol):
+        """Protocol for TUI app methods."""
+        def show_form(self, form: Any, future: asyncio.Future) -> None: ...
+        def show_confirm(self, confirm: Any, future: asyncio.Future) -> None: ...
+        def show_input(self, input_prim: Any, future: asyncio.Future) -> None: ...
+        def show_select(self, select: Any, future: asyncio.Future) -> None: ...
+        def show_table(self, table: Any) -> None: ...
+        def show_markdown(self, md: Any) -> None: ...
+        def show_code(self, code: Any) -> None: ...
+        def update_progress(self, progress: Any) -> None: ...
+        def show_alert(self, alert: Any) -> None: ...
+        def append_text(self, text: str) -> None: ...
+        def show_tool_use(self, tool_name: str, args: dict) -> None: ...
+        def flush_text(self) -> None: ...
 
 from agentui.primitives import (
     UIAlert,
@@ -308,7 +326,7 @@ class TUIRenderer(Renderer):
         # Wait for user to submit
         result = await self._pending_response
         self._pending_response = None
-        return result
+        return dict(result)
 
     async def _render_confirm(self, confirm: UIConfirm) -> bool:
         """Render a confirmation dialog."""
@@ -319,7 +337,7 @@ class TUIRenderer(Renderer):
 
         result = await self._pending_response
         self._pending_response = None
-        return result
+        return bool(result)
 
     async def _render_input(self, input_prim: UIInput) -> str:
         """Render a text input."""
@@ -330,7 +348,7 @@ class TUIRenderer(Renderer):
 
         result = await self._pending_response
         self._pending_response = None
-        return result
+        return str(result)
 
     async def _render_select(self, select: UISelect) -> str:
         """Render a selection."""
@@ -341,7 +359,7 @@ class TUIRenderer(Renderer):
 
         result = await self._pending_response
         self._pending_response = None
-        return result
+        return str(result)
 
     async def _render_table(self, table: UITable) -> None:
         """Render a data table."""
@@ -403,10 +421,10 @@ class TUIRenderer(Renderer):
         self._text_buffer = ""
 
 
-def create_tui_app(title: str = "AgentUI", css: str | None = None):
+def create_tui_app(title: str = "AgentUI", css: str | None = None) -> Any:
     """
     Create a Textual TUI application.
-    
+
     This is a factory function that creates the app with proper imports.
     """
     try:
@@ -429,7 +447,7 @@ def create_tui_app(title: str = "AgentUI", css: str | None = None):
         CSS = css or CHARM_CSS
         TITLE = title
 
-        def __init__(self, **kwargs):
+        def __init__(self, **kwargs: Any) -> None:
             super().__init__(**kwargs)
             self.renderer = TUIRenderer(self)
             self._message_container = None

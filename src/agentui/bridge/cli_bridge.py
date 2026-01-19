@@ -2,6 +2,7 @@
 
 import logging
 from collections.abc import AsyncIterator
+from typing import Literal
 
 from agentui.bridge.base import BaseBridge
 from agentui.bridge.tui_bridge import TUIConfig
@@ -108,7 +109,8 @@ class CLIBridge(BaseBridge):
         if description:
             self._console.print(f"[dim]{description}[/dim]\n")
 
-        values = {}
+        from typing import Any
+        values: dict[str, Any] = {}
         for field in fields:
             name = field.get("name", "")
             label = field.get("label", name)
@@ -116,7 +118,8 @@ class CLIBridge(BaseBridge):
             default = field.get("default", "")
 
             if field_type == "checkbox":
-                values[name] = Confirm.ask(label, default=bool(default))
+                # Confirm.ask returns bool, not bool | str
+                values[name] = bool(Confirm.ask(label, default=bool(default)))
             elif field_type == "select":
                 options = field.get("options", [])
                 if options:
@@ -130,7 +133,9 @@ class CLIBridge(BaseBridge):
                     except ValueError:
                         values[name] = options[0]
             else:
-                values[name] = Prompt.ask(label, default=str(default) if default else "")
+                # Text input always returns a string
+                text_value = Prompt.ask(label, default=str(default) if default else "")
+                values[name] = str(text_value)
 
         return values
 
@@ -215,7 +220,7 @@ class CLIBridge(BaseBridge):
     async def send_alert(
         self,
         message: str,
-        severity: str = "info",
+        severity: Literal["info", "success", "warning", "error"] = "info",
         title: str | None = None,
     ) -> None:
         """Show alert."""

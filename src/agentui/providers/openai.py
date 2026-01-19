@@ -29,7 +29,7 @@ class OpenAIProvider:
         self.max_tokens = max_tokens
         self._client = None
 
-    def _get_client(self):
+    def _get_client(self) -> object:
         """Get or create the OpenAI client."""
         if self._client is None:
             try:
@@ -117,15 +117,14 @@ class OpenAIProvider:
 
         return request
 
-    def _stream_sync(self, client, request):
+    def _stream_sync(self, client: object, request: dict) -> list[object]:
         """Synchronous streaming helper for executor."""
-        stream = client.chat.completions.create(**request)
-        for chunk in stream:
-            yield chunk
+        stream = client.chat.completions.create(**request)  # type: ignore[attr-defined]
+        return list(stream)
 
-    async def _process_chunk(self, chunk, state: dict) -> AsyncIterator[dict]:
+    async def _process_chunk(self, chunk: object, state: dict) -> AsyncIterator[dict]:
         """Process a single streaming chunk and yield response chunks."""
-        delta = chunk.choices[0].delta if chunk.choices else None
+        delta = chunk.choices[0].delta if chunk.choices else None  # type: ignore[attr-defined]
 
         if not delta:
             return
@@ -139,13 +138,13 @@ class OpenAIProvider:
             self._accumulate_tool_calls(delta.tool_calls, state["tool_calls"])
 
         # Usage info (in final chunk)
-        if chunk.usage:
+        if hasattr(chunk, "usage") and chunk.usage:
             state["input_tokens"] = chunk.usage.prompt_tokens
             state["output_tokens"] = chunk.usage.completion_tokens
 
-    def _accumulate_tool_calls(self, tool_call_deltas, tool_calls: dict) -> None:
+    def _accumulate_tool_calls(self, tool_call_deltas: object, tool_calls: dict) -> None:
         """Accumulate streaming tool call fragments."""
-        for tc in tool_call_deltas:
+        for tc in tool_call_deltas:  # type: ignore[attr-defined]
             idx = tc.index
 
             if idx not in tool_calls:

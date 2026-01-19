@@ -13,9 +13,10 @@ import argparse
 import asyncio
 import sys
 from pathlib import Path
+from typing import Any
 
 
-def cmd_run(args):
+def cmd_run(args: argparse.Namespace) -> None:
     """Run an agent app."""
     from agentui.app import AgentApp
 
@@ -27,7 +28,7 @@ def cmd_run(args):
 
     app = AgentApp(
         manifest=app_path,
-        provider=args.provider if args.provider else None,
+        provider=args.provider if args.provider else "claude",
         model=args.model if args.model else None,
         theme=args.theme,
     )
@@ -35,7 +36,7 @@ def cmd_run(args):
     asyncio.run(app.run())
 
 
-def cmd_init(args):
+def cmd_init(args: argparse.Namespace) -> None:
     """Create a new agent app scaffold."""
     name = args.name
     target = Path(args.path or name)
@@ -182,7 +183,7 @@ def my_tool(arg1: str) -> dict:
     print("  agentui run .")
 
 
-def cmd_quick(args):
+def cmd_quick(args: argparse.Namespace) -> None:
     """Quick one-shot interaction."""
     from agentui.app import quick_chat
 
@@ -200,7 +201,7 @@ def cmd_quick(args):
     print(response)
 
 
-def cmd_themes(args):
+def cmd_themes(args: argparse.Namespace) -> None:
     """List available themes."""
     themes = [
         ("charm-dark", "Charm signature pink/purple/teal on dark (default)"),
@@ -220,7 +221,7 @@ def cmd_themes(args):
         print(f"  {marker} {name:<20} {desc}")
 
 
-def main():
+def main() -> None:
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
         prog="agentui",

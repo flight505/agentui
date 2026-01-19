@@ -398,13 +398,17 @@ class TestUIStreamFinalize:
 
     def test_finalize_progress_with_steps(self):
         """Test finalizing progress with steps."""
+        from agentui.primitives import UIProgressStep
         stream = UIStream(Mock())
         steps = [{"label": "Step 1", "status": "complete"}]
 
         result = stream.finalize_progress("Processing", None, steps)
 
         assert isinstance(result, UIProgress)
-        assert result.steps == steps
+        assert len(result.steps) == 1
+        assert isinstance(result.steps[0], UIProgressStep)
+        assert result.steps[0].label == "Step 1"
+        assert result.steps[0].status == "complete"
 
     def test_finalize_alert(self):
         """Test finalizing stream as alert primitive."""

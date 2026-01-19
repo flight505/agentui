@@ -7,6 +7,7 @@ Core agent execution engine that delegates to specialized components.
 import asyncio
 import logging
 from collections.abc import AsyncIterator
+from typing import Any
 
 from agentui.bridge import CLIBridge, TUIBridge
 from agentui.component_catalog import ComponentCatalog
@@ -48,8 +49,8 @@ class AgentCore:
         self.ui_handler = UIHandler(bridge_getter=lambda: self.bridge)
         self.display_tools = DisplayToolRegistry(bridge_getter=lambda: self.bridge)
 
-        self._provider = None
-        self._setup_assistant = None  # Fallback when provider fails
+        self._provider: Any = None  # ClaudeProvider | OpenAIProvider
+        self._setup_assistant: Any = None  # Fallback when provider fails (SetupAssistant)
         self._running = False
 
         # Enhance system prompt with component catalog (Phase 1: Generative UI)
@@ -84,11 +85,11 @@ class AgentCore:
         else:
             self.message_handler.reset_cancel()
 
-    def _create_error_result(self, tool_name: str, tool_id: str, error: str):
+    def _create_error_result(self, tool_name: str, tool_id: str, error: str) -> ToolResult:
         """Create an error ToolResult (for backward compatibility)."""
         return self.tool_executor._create_error_result(tool_name, tool_id, error)
 
-    async def _stream_provider_response(self, provider):
+    async def _stream_provider_response(self, provider: Any) -> tuple[list[StreamChunk], list[dict], bool]:
         """Stream provider response (for backward compatibility)."""
         return await self.message_handler.stream_provider_response(
             provider,
@@ -113,7 +114,7 @@ class AgentCore:
         self.config.system_prompt = enhanced_prompt
         logger.debug("Enhanced system prompt with component catalog")
 
-    async def _get_provider(self):
+    async def _get_provider(self) -> Any:
         """Get or create the LLM provider."""
         if self._provider is None:
             provider_name = self.config.provider.value
@@ -147,7 +148,7 @@ class AgentCore:
         """Execute a tool and return the result."""
         return await self.tool_executor.execute_tool(tool_name, tool_id, arguments)
 
-    async def handle_ui_result(self, result):
+    async def handle_ui_result(self, result: Any) -> Any:
         """Handle UI primitive results from tools."""
         return await self.ui_handler.handle_ui_result(result)
 
@@ -193,7 +194,8 @@ class AgentCore:
             if should_return:
                 return
 
-            async for chunk in full_response:
+            # Yield chunks from the collected response list
+            for chunk in full_response:
                 yield chunk
 
             # If no tool calls, we're done
@@ -292,7 +294,7 @@ class AgentCore:
         except BridgeError as e:
             logger.error(f"Failed to send initial status: {e}")
 
-    async def _handle_event(self, event) -> None:
+    async def _handle_event(self, event: Any) -> None:
         """Dispatch event to appropriate handler based on event type."""
         event_type = event.type
 
@@ -306,7 +308,7 @@ class AgentCore:
             # Handle resize if needed
             pass
 
-    async def _handle_input_event(self, event) -> None:
+    async def _handle_input_event(self, event: Any) -> None:
         """Handle user input event."""
         assert self.bridge is not None, "Bridge must be set before handling input"
         bridge = self.bridge  # Local variable for type safety

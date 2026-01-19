@@ -5,11 +5,11 @@ import json
 import logging
 import shutil
 import subprocess
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, AsyncGenerator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from agentui.bridge.base import BaseBridge
 from agentui.exceptions import BridgeError, ConnectionError, ProtocolError, ValidationError
@@ -94,9 +94,9 @@ class TUIBridge(BaseBridge):
                 if candidate.exists():
                     return str(candidate)
             else:
-                found = shutil.which(candidate)
+                found = shutil.which(str(candidate))
                 if found:
-                    return found
+                    return str(found)
 
         raise FileNotFoundError(
             "agentui-tui binary not found. "
@@ -418,9 +418,10 @@ class TUIBridge(BaseBridge):
         footer: str | None = None,
     ) -> None:
         """Send a data table."""
+        from typing import cast
         msg = create_message(
             MessageType.TABLE,
-            table_payload(columns, rows, title, footer)
+            table_payload(cast(list, columns), rows, title, footer)
         )
         await self.send(msg)
 
@@ -468,7 +469,7 @@ class TUIBridge(BaseBridge):
     async def send_alert(
         self,
         message: str,
-        severity: str = "info",
+        severity: Literal["info", "success", "warning", "error"] = "info",
         title: str | None = None,
     ) -> None:
         """Show an alert notification."""
@@ -508,7 +509,7 @@ class TUIBridge(BaseBridge):
 
 
 @asynccontextmanager
-async def managed_bridge(config: TUIConfig | None = None, fallback: bool = True):
+async def managed_bridge(config: TUIConfig | None = None, fallback: bool = True) -> AsyncGenerator[BaseBridge, None]:
     """Context manager for bridge lifecycle."""
     from agentui.bridge import create_bridge
     bridge = create_bridge(config, fallback)

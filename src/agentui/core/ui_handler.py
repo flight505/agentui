@@ -5,6 +5,7 @@ Manages processing of UI primitive results from tools.
 """
 
 import logging
+from collections.abc import Callable
 from typing import Any
 
 from agentui.bridge import BridgeError
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 class UIHandler:
     """Handles UI primitive results from tools."""
 
-    def __init__(self, bridge_getter=None):
+    def __init__(self, bridge_getter: Callable[[], Any] | None = None):
         """Initialize the UI handler.
 
         Args:
@@ -32,7 +33,7 @@ class UIHandler:
         self._bridge_getter = bridge_getter
 
     @property
-    def bridge(self):
+    def bridge(self) -> Any:
         """Get the current bridge."""
         return self._bridge_getter() if self._bridge_getter else None
 

@@ -208,10 +208,12 @@ class AgentApp:
         )
 
         async with managed_bridge(tui_config, fallback=True) as bridge:
-            self._bridge = bridge
+            from typing import cast
+            typed_bridge = cast(TUIBridge | CLIBridge, bridge)
+            self._bridge = typed_bridge
 
             # Create core
-            self._core = AgentCore(config=self.config, bridge=bridge)
+            self._core = AgentCore(config=self.config, bridge=typed_bridge)
 
             # Register tools
             for tool in self._tools:
@@ -259,11 +261,11 @@ class AgentApp:
 
 def create_app(
     manifest: str | Path | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> AgentApp:
     """
     Create an agent application.
-    
+
     Args:
         manifest: Path to app.yaml or directory containing it
         **kwargs: Additional arguments passed to AgentApp

@@ -27,7 +27,7 @@ class BaseBridge(ABC):
         pass
 
     @abstractmethod
-    async def events(self) -> AsyncIterator[Message]:
+    def events(self) -> AsyncIterator[Message]:
         """Stream UI events."""
         pass
 
@@ -64,7 +64,7 @@ class BaseBridge(ABC):
     @abstractmethod
     async def send_table(
         self,
-        columns: list[str | dict],
+        columns: list[str],
         rows: list[list[str]],
         title: str | None = None,
         footer: str | None = None,

@@ -6,6 +6,7 @@ Manages tool registration, execution, confirmation, and component selection.
 
 import asyncio
 import logging
+from collections.abc import Callable
 from typing import Any
 
 from agentui.component_selector import ComponentSelector
@@ -29,7 +30,7 @@ logger = logging.getLogger(__name__)
 class ToolExecutor:
     """Handles tool execution and result processing."""
 
-    def __init__(self, bridge_getter=None):
+    def __init__(self, bridge_getter: Callable[[], Any] | None = None):
         """Initialize the tool executor.
 
         Args:
@@ -39,7 +40,7 @@ class ToolExecutor:
         self._bridge_getter = bridge_getter
 
     @property
-    def bridge(self):
+    def bridge(self) -> Any:
         """Get the current bridge."""
         return self._bridge_getter() if self._bridge_getter else None
 
@@ -102,7 +103,7 @@ class ToolExecutor:
             error=error,
         )
 
-    async def _confirm_tool_execution(self, tool_name: str, tool) -> bool:
+    async def _confirm_tool_execution(self, tool_name: str, tool: ToolDefinition) -> bool:
         """Check if tool requires confirmation and get user confirmation."""
         if not (tool.requires_confirmation and self.bridge):
             return True
@@ -114,7 +115,7 @@ class ToolExecutor:
             )
             if not confirmed:
                 logger.info(f"Tool {tool_name} execution cancelled by user")
-            return confirmed
+            return bool(confirmed)
         except BridgeError as e:
             logger.error(f"Failed to request confirmation: {e}")
             return True  # Continue on bridge error
@@ -127,7 +128,7 @@ class ToolExecutor:
             except BridgeError:
                 pass
 
-    async def _execute_tool_handler(self, tool, arguments: dict):
+    async def _execute_tool_handler(self, tool: ToolDefinition, arguments: dict) -> Any:
         """Execute the tool handler (async or sync)."""
         if asyncio.iscoroutinefunction(tool.handler):
             return await tool.handler(**arguments)
@@ -137,7 +138,7 @@ class ToolExecutor:
         return await loop.run_in_executor(None, lambda: tool.handler(**arguments))
 
     def _apply_component_selection(
-        self, tool, result, tool_name: str
+        self, tool: ToolDefinition, result: Any, tool_name: str
     ) -> tuple[Any, bool]:
         """Apply automatic component selection for tool results."""
         ui_primitives = (

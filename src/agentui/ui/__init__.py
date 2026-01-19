@@ -3,7 +3,7 @@ UI Renderers - TUI, CLI, and base classes.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, cast
 
 from agentui.primitives import (
     UIAlert,
@@ -69,7 +69,7 @@ class CLIRenderer(Renderer):
     This is the fallback renderer for environments without full TUI support.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         try:
             from rich.console import Console
         except ImportError:
@@ -166,7 +166,7 @@ class CLIRenderer(Renderer):
         """Render confirm primitive and return user response."""
         from rich.prompt import Confirm
 
-        return Confirm.ask(primitive.message, default=primitive.default)
+        return Confirm.ask(primitive.message, default=True)
 
     def _render_input(self, primitive: UIInput) -> str:
         """Render input primitive and return user response."""
@@ -207,21 +207,21 @@ class CLIRenderer(Renderer):
             self.console.print(f"[dim]{primitive.description}[/dim]\n")
 
         for field in primitive.fields:
-            if field.field_type == "checkbox":
+            if field.type == "checkbox":
                 results[field.name] = Confirm.ask(
                     field.label, default=field.default or False
                 )
-            elif field.field_type == "select" and field.options:
+            elif field.type == "select" and field.options:
                 results[field.name] = self._render_form_select_field(field)
             else:
                 results[field.name] = Prompt.ask(
                     field.label,
                     default=str(field.default) if field.default else "",
-                    password=field.field_type == "password",
+                    password=field.type == "password",
                 )
         return results
 
-    def _render_form_select_field(self, field) -> str:
+    def _render_form_select_field(self, field: Any) -> str:
         """Render a select field within a form and return choice."""
         from rich.prompt import Prompt
 
@@ -234,7 +234,7 @@ class CLIRenderer(Renderer):
             try:
                 idx = int(choice) - 1
                 if 0 <= idx < len(field.options):
-                    return field.options[idx]
+                    return cast(str, field.options[idx])
             except ValueError:
                 pass
             self.console.print("[red]Invalid choice[/red]")

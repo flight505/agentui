@@ -10,7 +10,7 @@ Inspired by Vercel AI SDK's streamUI with async generators.
 """
 
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable
 
 if TYPE_CHECKING:
     from agentui.bridge import CLIBridge, TUIBridge
@@ -77,7 +77,7 @@ class UIStream:
         try:
             if self._current_type:
                 # Update existing component
-                await self.bridge.send_message(
+                await self.bridge.send_message(  # type: ignore
                     MessageType.UPDATE,
                     update_payload(
                         self.component_id,
@@ -122,7 +122,7 @@ class UIStream:
         try:
             if self._current_type:
                 # Update existing component
-                await self.bridge.send_message(
+                await self.bridge.send_message(  # type: ignore
                     MessageType.UPDATE,
                     update_payload(
                         self.component_id,
@@ -167,7 +167,7 @@ class UIStream:
         try:
             if self._current_type:
                 # Update existing component
-                await self.bridge.send_message(
+                await self.bridge.send_message(  # type: ignore
                     MessageType.UPDATE,
                     update_payload(
                         self.component_id,
@@ -210,7 +210,7 @@ class UIStream:
         try:
             if self._current_type:
                 # Update existing component
-                await self.bridge.send_message(
+                await self.bridge.send_message(  # type: ignore
                     MessageType.UPDATE,
                     update_payload(
                         self.component_id,
@@ -221,9 +221,18 @@ class UIStream:
                 )
             else:
                 # Create new alert component
+                from typing import Literal
+                # Type narrowing for severity
+                valid_severities: dict[str, Literal["info", "success", "warning", "error"]] = {
+                    "info": "info",
+                    "success": "success",
+                    "warning": "warning",
+                    "error": "error",
+                }
+                typed_severity = valid_severities.get(severity, "info")
                 await self.bridge.send_alert(
                     message=message,
-                    severity=severity,
+                    severity=typed_severity,
                     title=title,
                 )
                 self._current_type = "alert"
@@ -238,7 +247,7 @@ class UIStream:
         rows: list[list[str]],
         title: str | None = None,
         footer: str | None = None,
-    ):
+    ) -> Any:
         """
         Finalize as table primitive.
 
@@ -258,7 +267,7 @@ class UIStream:
         code: str,
         language: str = "text",
         title: str | None = None,
-    ):
+    ) -> Any:
         """
         Finalize as code primitive.
 
@@ -277,7 +286,7 @@ class UIStream:
         message: str,
         percent: float | None = None,
         steps: list[dict] | None = None,
-    ):
+    ) -> Any:
         """
         Finalize as progress primitive.
 
@@ -285,10 +294,16 @@ class UIStream:
             UIProgress instance
         """
         from agentui.primitives import UIProgress
+        from agentui.primitives import UIProgressStep
+
+        typed_steps = None
+        if steps:
+            typed_steps = [UIProgressStep(**step) for step in steps]
+
         return UIProgress(
             message=message,
             percent=percent,
-            steps=steps,
+            steps=typed_steps,
         )
 
     def finalize_alert(
@@ -296,22 +311,33 @@ class UIStream:
         message: str,
         severity: str = "info",
         title: str | None = None,
-    ):
+    ) -> Any:
         """
         Finalize as alert primitive.
 
         Returns:
             UIAlert instance
         """
+        from typing import Literal
         from agentui.primitives import UIAlert
+
+        # Type narrowing for severity
+        valid_severities: dict[str, Literal["info", "success", "warning", "error"]] = {
+            "info": "info",
+            "success": "success",
+            "warning": "warning",
+            "error": "error",
+        }
+        typed_severity = valid_severities.get(severity, "info")
+
         return UIAlert(
             message=message,
-            severity=severity,
+            severity=typed_severity,
             title=title,
         )
 
 
-def streaming_tool(func):
+def streaming_tool(func: Callable[..., Any]) -> Callable[..., Any]:
     """
     Decorator to mark a tool as supporting progressive streaming.
 
@@ -326,5 +352,5 @@ def streaming_tool(func):
 
     The decorator sets a flag that can be checked by the framework.
     """
-    func._is_streaming = True
+    setattr(func, "_is_streaming", True)
     return func

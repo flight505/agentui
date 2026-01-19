@@ -28,7 +28,7 @@ class ClaudeProvider:
         self.max_tokens = max_tokens
         self._client = None
 
-    def _get_client(self):
+    def _get_client(self) -> object:
         """Get or create the Anthropic client."""
         if self._client is None:
             try:
@@ -105,13 +105,12 @@ class ClaudeProvider:
 
         return request
 
-    def _stream_sync(self, client, request):
+    def _stream_sync(self, client: object, request: dict) -> list[object]:
         """Synchronous streaming helper for executor."""
-        with client.messages.stream(**request) as stream:
-            for event in stream:
-                yield event
+        with client.messages.stream(**request) as stream:  # type: ignore[attr-defined]
+            return list(stream)
 
-    async def _process_event(self, event, tool_state: dict) -> AsyncIterator[dict]:
+    async def _process_event(self, event: object, tool_state: dict) -> AsyncIterator[dict]:
         """Process a single streaming event and yield response chunks."""
         event_type = getattr(event, "type", None)
 
@@ -133,9 +132,9 @@ class ClaudeProvider:
             if chunk:
                 yield chunk
 
-    def _handle_content_block_start(self, event, tool_state: dict) -> None:
+    def _handle_content_block_start(self, event: object, tool_state: dict) -> None:
         """Handle start of content block (e.g., tool use)."""
-        block = event.content_block
+        block = event.content_block  # type: ignore[attr-defined]
         if hasattr(block, "type") and block.type == "tool_use":
             tool_state["current_tool"] = {
                 "id": block.id,
@@ -143,9 +142,9 @@ class ClaudeProvider:
             }
             tool_state["current_tool_input"] = ""
 
-    def _handle_content_block_delta(self, event, tool_state: dict) -> dict | None:
+    def _handle_content_block_delta(self, event: object, tool_state: dict) -> dict | None:
         """Handle content block delta (text or tool input)."""
-        delta = event.delta
+        delta = event.delta  # type: ignore[attr-defined]
         if not hasattr(delta, "type"):
             return None
 
@@ -187,7 +186,7 @@ class ClaudeProvider:
 
         return chunk
 
-    def _handle_message_delta(self, event) -> dict | None:
+    def _handle_message_delta(self, event: object) -> dict | None:
         """Handle message delta (token usage)."""
         usage = getattr(event, "usage", None)
         if not usage:
