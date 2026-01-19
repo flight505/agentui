@@ -256,6 +256,78 @@ uv run python my_agent.py
 
 You'll see a beautiful TUI where you can chat with the AI, and it will automatically call your `get_weather` function when appropriate!
 
+### Data-Driven UI: Auto Component Selection
+
+Tools return plain data structures — AgentUI automatically selects the optimal UI component:
+
+```python
+@app.tool(
+    name="get_users",
+    description="Get list of users from database"
+)
+def get_users():
+    # Return list of dicts → automatically becomes a table
+    return [
+        {"name": "Alice", "role": "Admin", "status": "Active"},
+        {"name": "Bob", "role": "User", "status": "Active"},
+        {"name": "Carol", "role": "User", "status": "Inactive"}
+    ]
+
+@app.tool(
+    name="analyze_code",
+    description="Analyze a code file"
+)
+def analyze_code(file_path: str):
+    # Return code string → automatically becomes syntax-highlighted code block
+    with open(file_path) as f:
+        return f.read()  # Framework detects language from extension
+```
+
+**The magic:** You just return Python data structures. The framework sees:
+- List of dicts with consistent keys → Renders as table
+- String with code patterns → Renders as syntax-highlighted code
+- Dict with "percent" key → Renders as progress bar
+
+No UI coupling in your tool logic!
+
+### Dashboard Layouts: Multi-Component Views
+
+Compose multiple UI components into dashboard-style layouts:
+
+```python
+from agentui import UILayout
+
+@app.tool(
+    name="system_dashboard",
+    description="Show system health dashboard"
+)
+def system_dashboard():
+    return (
+        UILayout(title="🖥️ System Status")
+        .add_table(
+            columns=["Service", "Status", "Uptime"],
+            rows=[
+                ["API Server", "✓ Running", "99.9%"],
+                ["Database", "✓ Running", "99.8%"],
+                ["Cache", "✓ Running", "100%"]
+            ],
+            area="left"
+        )
+        .add_progress(
+            message="CPU Usage",
+            percent=65,
+            area="right-top"
+        )
+        .add_progress(
+            message="Memory Usage",
+            percent=42,
+            area="right-bottom"
+        )
+    )
+```
+
+The TUI automatically arranges components based on the `area` hints, creating beautiful multi-panel dashboards.
+
 ---
 
 ## 🎭 Generative UI: The Hidden Power
