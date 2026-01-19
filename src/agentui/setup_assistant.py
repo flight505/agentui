@@ -10,6 +10,7 @@ import os
 import subprocess
 import sys
 from collections.abc import AsyncIterator
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ class SetupAssistant:
 
     def __init__(self, provider_error: str):
         self.provider_error = provider_error
-        self.context = {}  # Track conversation context
+        self.context: dict[str, Any] = {}  # Track conversation context
 
     async def process_message(self, user_input: str) -> AsyncIterator[str]:
         """Process user input and provide setup guidance."""

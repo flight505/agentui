@@ -37,7 +37,7 @@ class MessageHandler:
         return self._cancel_requested
 
     async def stream_provider_response(
-        self, provider, system_prompt: str, tool_schemas: list[dict] | None
+        self, provider: Any, system_prompt: str, tool_schemas: list[dict] | None
     ) -> tuple[list[StreamChunk], list[dict], bool]:
         """
         Stream response from provider and collect chunks and tool calls.

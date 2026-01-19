@@ -5,6 +5,7 @@ Auto-registers display_* tools for UI primitives (Generative UI Phase 1).
 """
 
 import logging
+from collections.abc import Callable
 from typing import Any
 
 from agentui.component_catalog import ComponentCatalog
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 class DisplayToolRegistry:
     """Manages registration and execution of display_* tools."""
 
-    def __init__(self, bridge_getter=None):
+    def __init__(self, bridge_getter: Callable | None = None) -> None:
         """Initialize the display tool registry.
 
         Args:
@@ -26,11 +27,11 @@ class DisplayToolRegistry:
         self._bridge_getter = bridge_getter
 
     @property
-    def bridge(self):
+    def bridge(self) -> Any:
         """Get the current bridge."""
         return self._bridge_getter() if self._bridge_getter else None
 
-    def register_display_tools(self, tool_executor) -> None:
+    def register_display_tools(self, tool_executor: Any) -> None:
         """
         Auto-register display_* tools for UI primitives (Phase 1: Generative UI).
 
@@ -67,14 +68,14 @@ class DisplayToolRegistry:
 
         logger.debug(f"Auto-registered {len(tool_schemas)} display_* tools")
 
-    def _create_display_handler(self, tool_name: str, schema: dict):
+    def _create_display_handler(self, tool_name: str, schema: dict) -> Callable:
         """
         Create handler function for a display_* tool.
 
         The handler sends the appropriate UI message via the bridge.
         """
 
-        async def handler(**kwargs):
+        async def handler(**kwargs: Any) -> Any:
             if not self.bridge:
                 return f"[Would display {tool_name} with: {kwargs}]"
 
@@ -88,7 +89,7 @@ class DisplayToolRegistry:
 
         return handler
 
-    async def _execute_display_message(self, msg_type: str, kwargs: dict):
+    async def _execute_display_message(self, msg_type: str, kwargs: dict) -> Any:
         """Execute a display message based on type."""
         bridge = self.bridge
         if not bridge:

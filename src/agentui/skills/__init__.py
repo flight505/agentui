@@ -8,7 +8,7 @@ Skills are directories containing:
 
 import importlib.util
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 import yaml
 
@@ -51,8 +51,8 @@ class Skill:
 
         name = path.name
         instructions = ""
-        config = {}
-        tools = []
+        config: dict[str, Any] = {}
+        tools: list[ToolDefinition] = []
 
         # Load SKILL.md
         skill_md = path / "SKILL.md"
@@ -133,7 +133,7 @@ class Skill:
                 f"It must be a function."
             )
 
-        return handler
+        return cast(Callable[..., Any], handler)
 
     def get_system_prompt_section(self) -> str:
         """Get the system prompt section for this skill."""
@@ -150,7 +150,7 @@ class Skill:
 class SkillRegistry:
     """Registry for managing loaded skills."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._skills: dict[str, Skill] = {}
 
     def load(self, path: str | Path) -> Skill:

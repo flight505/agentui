@@ -285,7 +285,7 @@ class ComponentSelector:
             return False
 
         # Get all unique keys
-        all_keys = set()
+        all_keys: set[str] = set()
         for item in data:
             all_keys.update(item.keys())
 
@@ -401,7 +401,7 @@ class ComponentSelector:
 
 # ===== Phase 4: Component Override Decorators =====
 
-def prefer_component(component_type: str, language: str | None = None):
+def prefer_component(component_type: str, language: str | None = None) -> Callable:
     """
     Decorator to hint preferred component type for a tool (Phase 4).
 
@@ -422,7 +422,7 @@ def prefer_component(component_type: str, language: str | None = None):
     """
     def decorator(func: Callable) -> Callable:
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             result = func(*args, **kwargs)
 
             # If result is plain data, wrap with component hint

@@ -69,7 +69,7 @@ class ANSISnapshotter:
         self.snapshot_dir = Path(snapshot_dir)
         self.snapshot_dir.mkdir(parents=True, exist_ok=True)
 
-    def save_baseline(self, name: str, output: str, overwrite: bool = False):
+    def save_baseline(self, name: str, output: str, overwrite: bool = False) -> None:
         """
         Save ANSI output as baseline snapshot
 
@@ -135,7 +135,7 @@ class ANSISnapshotter:
             changes=changes
         )
 
-    def update(self, name: str, new_output: str):
+    def update(self, name: str, new_output: str) -> None:
         """
         Update baseline snapshot (after intentional changes)
 
@@ -188,7 +188,7 @@ class ANSISnapshotter:
         ansi_files = self.snapshot_dir.glob("*.ansi")
         return [f.stem for f in ansi_files]
 
-    def delete(self, name: str):
+    def delete(self, name: str) -> None:
         """Delete a snapshot"""
         ansi_file = self.snapshot_dir / f"{name}.ansi"
         text_file = self.snapshot_dir / f"{name}.txt"

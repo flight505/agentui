@@ -235,7 +235,7 @@ class ComponentTester:
         component = UITable(title=title, columns=columns, rows=rows)
         return self.render(component)
 
-    def snapshot_match(self, name: str, output: str):
+    def snapshot_match(self, name: str, output: str) -> None:
         """
         Snapshot assertion: compare output to baseline
 

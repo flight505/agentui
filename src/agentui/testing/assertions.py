@@ -48,7 +48,7 @@ class ANSIAsserter:
         """Check if output contains any ANSI escape sequences"""
         return '\x1b[' in output
 
-    def assert_has_ansi_codes(self, output: str, message: str | None = None):
+    def assert_has_ansi_codes(self, output: str, message: str | None = None) -> None:
         """Assert that output contains ANSI codes"""
         if not self.has_ansi_codes(output):
             msg = message or "Output does not contain ANSI escape sequences"
@@ -65,7 +65,7 @@ class ANSIAsserter:
         output: str,
         ansi_code: str,
         message: str | None = None
-    ):
+    ) -> None:
         """Assert that specific ANSI color code is present"""
         if not self.has_color_code(output, ansi_code):
             msg = message or f"Output does not contain ANSI color code {ansi_code}"
@@ -76,7 +76,7 @@ class ANSIAsserter:
         """Check if output has pink-colored text (keywords in CharmDark)"""
         return self.has_color_code(output, self.CHARM_PINK)
 
-    def assert_has_pink_keywords(self, output: str):
+    def assert_has_pink_keywords(self, output: str) -> None:
         """Assert pink keywords present (CharmDark theme)"""
         self.assert_has_color_code(
             output,
@@ -88,7 +88,7 @@ class ANSIAsserter:
         """Check if output has teal-colored text (strings in CharmDark)"""
         return self.has_color_code(output, self.CHARM_TEAL)
 
-    def assert_has_teal_strings(self, output: str):
+    def assert_has_teal_strings(self, output: str) -> None:
         """Assert teal strings present (CharmDark theme)"""
         self.assert_has_color_code(
             output,
@@ -100,7 +100,7 @@ class ANSIAsserter:
         """Check if output has purple-colored text (functions in CharmDark)"""
         return self.has_color_code(output, self.CHARM_PURPLE)
 
-    def assert_has_purple_functions(self, output: str):
+    def assert_has_purple_functions(self, output: str) -> None:
         """Assert purple functions present (CharmDark theme)"""
         self.assert_has_color_code(
             output,
@@ -112,7 +112,7 @@ class ANSIAsserter:
         """Check if output has gray-colored text (comments in CharmDark)"""
         return self.has_color_code(output, self.CHARM_GRAY)
 
-    def assert_has_gray_comments(self, output: str):
+    def assert_has_gray_comments(self, output: str) -> None:
         """Assert gray comments present (CharmDark theme)"""
         self.assert_has_color_code(
             output,
@@ -125,7 +125,7 @@ class ANSIAsserter:
         """Check if output contains bold text"""
         return self.BOLD in output
 
-    def assert_has_bold_text(self, output: str):
+    def assert_has_bold_text(self, output: str) -> None:
         """Assert that output contains bold styling"""
         if not self.has_bold_text(output):
             raise AssertionError("Output does not contain bold text (\\x1b[1m)")
@@ -134,7 +134,7 @@ class ANSIAsserter:
         """Check if output contains italic text"""
         return self.ITALIC in output
 
-    def assert_has_italic_text(self, output: str):
+    def assert_has_italic_text(self, output: str) -> None:
         """Assert that output contains italic styling"""
         if not self.has_italic_text(output):
             raise AssertionError("Output does not contain italic text (\\x1b[3m)")
@@ -145,7 +145,7 @@ class ANSIAsserter:
         borders = ["╭", "╮", "╰", "╯", "─", "│"]
         return any(char in output for char in borders)
 
-    def assert_has_borders(self, output: str):
+    def assert_has_borders(self, output: str) -> None:
         """Assert that output contains box-drawing borders"""
         if not self.has_borders(output):
             raise AssertionError(
@@ -159,7 +159,7 @@ class ANSIAsserter:
         plain = self._strip_ansi(output)
         return text in plain
 
-    def assert_contains_text(self, output: str, text: str):
+    def assert_contains_text(self, output: str, text: str) -> None:
         """Assert that specific text is present"""
         if not self.contains_text(output, text):
             raise AssertionError(f"Output does not contain text: '{text}'")
@@ -170,7 +170,7 @@ class ANSIAsserter:
         return ansi_escape.sub('', text)
 
     # Size assertions
-    def assert_min_size(self, output: str, min_bytes: int):
+    def assert_min_size(self, output: str, min_bytes: int) -> None:
         """Assert output is at least min_bytes (indicates highlighting)"""
         actual_size = len(output)
         if actual_size < min_bytes:
@@ -184,7 +184,7 @@ class ANSIAsserter:
         highlighted: str,
         plain: str,
         min_ratio: float = 2.0
-    ):
+    ) -> None:
         """
         Assert highlighted code is significantly larger than plain text
 

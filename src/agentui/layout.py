@@ -69,7 +69,7 @@ class UILayout:
         title: str | None = None,
         footer: str | None = None,
         area: str | None = None,
-        **kwargs
+        **kwargs: Any
     ) -> "UILayout":
         """
         Add table component to layout.
@@ -80,7 +80,7 @@ class UILayout:
             title: Table title
             footer: Table footer
             area: Layout area hint
-            **kwargs: Additional layout hints
+            **kwargs: Any: Additional layout hints
 
         Returns:
             Self for chaining
@@ -105,7 +105,7 @@ class UILayout:
         language: str = "text",
         title: str | None = None,
         area: str | None = None,
-        **kwargs
+        **kwargs: Any
     ) -> "UILayout":
         """
         Add code component to layout.
@@ -115,7 +115,7 @@ class UILayout:
             language: Programming language
             title: Code block title
             area: Layout area hint
-            **kwargs: Additional layout hints
+            **kwargs: Any: Additional layout hints
 
         Returns:
             Self for chaining
@@ -139,7 +139,7 @@ class UILayout:
         percent: float | None = None,
         steps: list[dict] | None = None,
         area: str | None = None,
-        **kwargs
+        **kwargs: Any
     ) -> "UILayout":
         """
         Add progress component to layout.
@@ -149,7 +149,7 @@ class UILayout:
             percent: Percentage (0-100)
             steps: Multi-step progress
             area: Layout area hint
-            **kwargs: Additional layout hints
+            **kwargs: Any: Additional layout hints
 
         Returns:
             Self for chaining
@@ -173,7 +173,7 @@ class UILayout:
         severity: Literal["info", "success", "warning", "error"] = "info",
         title: str | None = None,
         area: str | None = None,
-        **kwargs
+        **kwargs: Any
     ) -> "UILayout":
         """
         Add alert component to layout.
@@ -183,7 +183,7 @@ class UILayout:
             severity: Alert severity
             title: Alert title
             area: Layout area hint
-            **kwargs: Additional layout hints
+            **kwargs: Any: Additional layout hints
 
         Returns:
             Self for chaining
@@ -206,7 +206,7 @@ class UILayout:
         component_type: str,
         payload: dict[str, Any],
         area: str | None = None,
-        **kwargs
+        **kwargs: Any
     ) -> "UILayout":
         """
         Add generic component to layout.
@@ -215,7 +215,7 @@ class UILayout:
             component_type: Component type
             payload: Component payload
             area: Layout area hint
-            **kwargs: Additional layout hints
+            **kwargs: Any: Additional layout hints
 
         Returns:
             Self for chaining

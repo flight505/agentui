@@ -49,7 +49,7 @@ class Message:
 
     def to_json(self) -> str:
         """Serialize to JSON line."""
-        data = {"type": self.type}
+        data: dict[str, Any] = {"type": self.type}
         if self.id:
             data["id"] = self.id
         if self.payload:
@@ -69,14 +69,14 @@ class Message:
 
 # --- Payload builders for Python → Go ---
 
-def text_payload(content: str, done: bool = False) -> dict:
+def text_payload(content: str, done: bool = False) -> dict[str, Any]:
     """Create text payload."""
     return {"content": content, "done": done}
 
 
-def markdown_payload(content: str, title: str | None = None) -> dict:
+def markdown_payload(content: str, title: str | None = None) -> dict[str, Any]:
     """Create markdown payload."""
-    payload = {"content": content}
+    payload: dict[str, Any] = {"content": content}
     if title:
         payload["title"] = title
     return payload
@@ -86,9 +86,9 @@ def progress_payload(
     message: str,
     percent: float | None = None,
     steps: list[dict] | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """Create progress payload."""
-    payload = {"message": message}
+    payload: dict[str, Any] = {"message": message}
     if percent is not None:
         payload["percent"] = percent
     if steps:
@@ -102,9 +102,9 @@ def form_payload(
     description: str | None = None,
     submit_label: str = "Submit",
     cancel_label: str = "Cancel",
-) -> dict:
+) -> dict[str, Any]:
     """Create form payload."""
-    payload = {"fields": fields}
+    payload: dict[str, Any] = {"fields": fields}
     if title:
         payload["title"] = title
     if description:
@@ -123,9 +123,9 @@ def form_field(
     required: bool = False,
     description: str | None = None,
     placeholder: str | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """Create a form field definition."""
-    field = {
+    field: dict[str, Any] = {
         "name": name,
         "label": label,
         "type": field_type,
@@ -148,9 +148,9 @@ def table_payload(
     rows: list[list[str]],
     title: str | None = None,
     footer: str | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """Create table payload."""
-    payload = {"columns": columns, "rows": rows}
+    payload: dict[str, Any] = {"columns": columns, "rows": rows}
     if title:
         payload["title"] = title
     if footer:
@@ -163,9 +163,9 @@ def code_payload(
     language: str = "text",
     title: str | None = None,
     line_numbers: bool = True,
-) -> dict:
+) -> dict[str, Any]:
     """Create code payload."""
-    payload = {
+    payload: dict[str, Any] = {
         "code": code,
         "language": language,
         "line_numbers": line_numbers,
@@ -181,9 +181,9 @@ def confirm_payload(
     confirm_label: str = "Yes",
     cancel_label: str = "No",
     destructive: bool = False,
-) -> dict:
+) -> dict[str, Any]:
     """Create confirm payload."""
-    payload = {
+    payload: dict[str, Any] = {
         "message": message,
         "confirm_label": confirm_label,
         "cancel_label": cancel_label,
@@ -198,9 +198,9 @@ def select_payload(
     label: str,
     options: list[str],
     default: str | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """Create select payload."""
-    payload = {"label": label, "options": options}
+    payload: dict[str, Any] = {"label": label, "options": options}
     if default:
         payload["default"] = default
     return payload
@@ -210,15 +210,15 @@ def alert_payload(
     message: str,
     severity: Literal["info", "success", "warning", "error"] = "info",
     title: str | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """Create alert payload."""
-    payload = {"message": message, "severity": severity}
+    payload: dict[str, Any] = {"message": message, "severity": severity}
     if title:
         payload["title"] = title
     return payload
 
 
-def spinner_payload(message: str) -> dict:
+def spinner_payload(message: str) -> dict[str, Any]:
     """Create spinner payload."""
     return {"message": message}
 
@@ -226,28 +226,28 @@ def spinner_payload(message: str) -> dict:
 def status_payload(
     message: str,
     tokens: dict | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """Create status payload."""
-    payload = {"message": message}
+    payload: dict[str, Any] = {"message": message}
     if tokens:
         payload["tokens"] = tokens
     return payload
 
 
-def clear_payload(scope: str = "chat") -> dict:
+def clear_payload(scope: str = "chat") -> dict[str, Any]:
     """Create clear payload."""
     return {"scope": scope}
 
 
-def done_payload(summary: str | None = None) -> dict:
+def done_payload(summary: str | None = None) -> dict[str, Any]:
     """Create done payload."""
-    payload = {}
+    payload: dict[str, Any] = {}
     if summary:
         payload["summary"] = summary
     return payload
 
 
-def update_payload(component_id: str, **updates) -> dict:
+def update_payload(component_id: str, **updates: Any) -> dict[str, Any]:
     """
     Create update payload for progressive streaming (Phase 3).
 
@@ -267,7 +267,7 @@ def layout_payload(
     title: str | None = None,
     description: str | None = None,
     components: list[dict] | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """
     Create layout payload for multi-component layouts (Phase 5).
 
@@ -279,7 +279,7 @@ def layout_payload(
     Returns:
         Payload dict for layout message
     """
-    payload = {}
+    payload: dict[str, Any] = {}
     if title:
         payload["title"] = title
     if description:

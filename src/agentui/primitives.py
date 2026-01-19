@@ -21,9 +21,9 @@ class UIFormField:
     description: str | None = None
     placeholder: str | None = None
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to protocol dict."""
-        d = {
+        d: dict[str, Any] = {
             "name": self.name,
             "label": self.label,
             "type": self.type,
@@ -50,7 +50,7 @@ class UIForm:
     submit_label: str = "Submit"
     cancel_label: str = "Cancel"
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to protocol dict."""
         return {
             "title": self.title,
@@ -68,9 +68,9 @@ class UIProgressStep:
     status: Literal["pending", "running", "complete", "error"] = "pending"
     detail: str | None = None
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to protocol dict."""
-        d = {"label": self.label, "status": self.status}
+        d: dict[str, Any] = {"label": self.label, "status": self.status}
         if self.detail:
             d["detail"] = self.detail
         return d
@@ -83,9 +83,9 @@ class UIProgress:
     percent: float | None = None
     steps: list[UIProgressStep] | None = None
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to protocol dict."""
-        d = {"message": self.message}
+        d: dict[str, Any] = {"message": self.message}
         if self.percent is not None:
             d["percent"] = self.percent
         if self.steps:
@@ -101,9 +101,9 @@ class UITable:
     title: str | None = None
     footer: str | None = None
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to protocol dict."""
-        d = {"columns": self.columns, "rows": self.rows}
+        d: dict[str, Any] = {"columns": self.columns, "rows": self.rows}
         if self.title:
             d["title"] = self.title
         if self.footer:
@@ -119,9 +119,9 @@ class UICode:
     title: str | None = None
     line_numbers: bool = True
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to protocol dict."""
-        d = {
+        d: dict[str, Any] = {
             "code": self.code,
             "language": self.language,
             "line_numbers": self.line_numbers,
@@ -140,9 +140,9 @@ class UIConfirm:
     cancel_label: str = "No"
     destructive: bool = False
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to protocol dict."""
-        d = {
+        d: dict[str, Any] = {
             "message": self.message,
             "confirm_label": self.confirm_label,
             "cancel_label": self.cancel_label,
@@ -160,9 +160,9 @@ class UISelect:
     options: list[str]
     default: str | None = None
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to protocol dict."""
-        d = {"label": self.label, "options": self.options}
+        d: dict[str, Any] = {"label": self.label, "options": self.options}
         if self.default:
             d["default"] = self.default
         return d
@@ -175,9 +175,9 @@ class UIAlert:
     severity: Literal["info", "success", "warning", "error"] = "info"
     title: str | None = None
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to protocol dict."""
-        d = {"message": self.message, "severity": self.severity}
+        d: dict[str, Any] = {"message": self.message, "severity": self.severity}
         if self.title:
             d["title"] = self.title
         return d
@@ -189,7 +189,7 @@ class UIText:
     content: str
     done: bool = False
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to protocol dict."""
         return {"content": self.content, "done": self.done}
 
@@ -200,9 +200,9 @@ class UIMarkdown:
     content: str
     title: str | None = None
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to protocol dict."""
-        d = {"content": self.content}
+        d: dict[str, Any] = {"content": self.content}
         if self.title:
             d["title"] = self.title
         return d
@@ -215,9 +215,9 @@ class UIInput:
     default: str | None = None
     password: bool = False
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to protocol dict."""
-        d = {"label": self.label, "password": self.password}
+        d: dict[str, Any] = {"label": self.label, "password": self.password}
         if self.default:
             d["default"] = self.default
         return d
@@ -228,7 +228,7 @@ class UISpinner:
     """A spinner/loading indicator."""
     message: str
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to protocol dict."""
         return {"message": self.message}
 
