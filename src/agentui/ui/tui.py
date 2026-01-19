@@ -1,3 +1,4 @@
+# pyright: reportMissingImports=false
 """
 TUI Renderer using Textual - Charm-inspired beautiful terminal UI.
 """
@@ -397,7 +398,7 @@ class TUIRenderer(Renderer):
         if self.app:
             self.app.show_tool_use(tool_name, args)
 
-    async def confirm_tool(self, tool_name: str, args: dict) -> bool:
+    async def confirm_tool(self, tool_name: str, _args: dict) -> bool:
         """Ask user to confirm tool."""
         confirm = UIConfirm(
             message=f"Allow tool '{tool_name}'?",
@@ -478,18 +479,18 @@ def create_tui_app(title: str = "AgentUI", css: str | None = None) -> Any:
                 self._message_container.mount(widget)
             self._current_text = ""
 
-        def show_form(self, form: UIForm, future: asyncio.Future) -> None:
+        def show_form(self, _form: UIForm, future: asyncio.Future) -> None:
             """Show a form dialog."""
             # In real implementation, push a form screen
             # For now, resolve with empty dict
             future.set_result({})
 
-        def show_confirm(self, confirm: UIConfirm, future: asyncio.Future) -> None:
+        def show_confirm(self, _confirm: UIConfirm, future: asyncio.Future) -> None:
             """Show a confirm dialog."""
             # In real implementation, push a confirm screen
             future.set_result(True)
 
-        def show_input(self, input_prim: UIInput, future: asyncio.Future) -> None:
+        def show_input(self, _input_prim: UIInput, future: asyncio.Future) -> None:
             """Show an input dialog."""
             future.set_result("")
 
@@ -524,7 +525,7 @@ def create_tui_app(title: str = "AgentUI", css: str | None = None) -> Any:
                 widget = Static(syntax)
                 self._message_container.mount(widget)
 
-        def update_progress(self, progress: UIProgress) -> None:
+        def update_progress(self, _progress: UIProgress) -> None:
             """Update progress indicator."""
             # In real implementation, update progress bar widget
             pass
@@ -538,7 +539,7 @@ def create_tui_app(title: str = "AgentUI", css: str | None = None) -> Any:
                 )
                 self._message_container.mount(widget)
 
-        def show_tool_use(self, tool_name: str, args: dict) -> None:
+        def show_tool_use(self, tool_name: str, _args: dict) -> None:
             """Show tool being used."""
             if self._message_container:
                 widget = Static(f"🔧 Using: {tool_name}", classes="tool-use")
