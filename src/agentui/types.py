@@ -1,5 +1,21 @@
 """
-Core types for AgentUI.
+Core type definitions for AgentUI.
+
+This module defines the core types used throughout AgentUI for representing
+agent state, tool definitions, messages, and configuration.
+
+Key types:
+    - ToolDefinition: Defines a callable tool with LLM schema
+    - Message: Conversation message with role and content
+    - ToolResult: Result of executing a tool
+    - AgentState: Current state of the running agent
+    - StreamChunk: Streaming response chunk
+    - AppManifest: Application manifest loaded from app.yaml
+
+Configuration types (re-exported from agentui.config):
+    - ProviderType: LLM provider enumeration
+    - AgentConfig: Agent configuration
+    - TUIConfig: TUI display configuration
 """
 
 from collections.abc import Awaitable, Callable
@@ -17,7 +33,37 @@ __all__ = ["ProviderType", "AgentConfig", "TUIConfig", "ToolDefinition", "Messag
 
 @dataclass
 class ToolDefinition:
-    """Definition of a tool that the agent can use."""
+    """
+    Definition of a callable tool for LLM use.
+
+    Defines a tool that the agent can call, including its schema for the LLM
+    and the handler function that executes when called.
+
+    Attributes:
+        name: Tool name exposed to the LLM
+        description: Tool description shown to the LLM
+        parameters: JSON Schema describing tool parameters
+        handler: Sync or async function that executes the tool
+        is_ui_tool: If True, handler returns UI primitives instead of data
+        requires_confirmation: If True, prompts user before execution
+
+    Example:
+        >>> def get_weather(city: str) -> dict:
+        ...     return {"temp": 72, "conditions": "sunny"}
+        >>>
+        >>> tool = ToolDefinition(
+        ...     name="get_weather",
+        ...     description="Get current weather for a city",
+        ...     parameters={
+        ...         "type": "object",
+        ...         "properties": {
+        ...             "city": {"type": "string"}
+        ...         },
+        ...         "required": ["city"]
+        ...     },
+        ...     handler=get_weather
+        ... )
+    """
     name: str
     description: str
     parameters: dict[str, Any]
@@ -26,7 +72,13 @@ class ToolDefinition:
     requires_confirmation: bool = False
 
     def to_schema(self) -> dict:
-        """Convert to LLM tool schema format."""
+        """
+        Convert to LLM tool schema format.
+
+        Returns:
+            Dictionary in Anthropic tool schema format with name,
+            description, and input_schema
+        """
         return {
             "name": self.name,
             "description": self.description,
@@ -36,7 +88,15 @@ class ToolDefinition:
 
 @dataclass
 class Message:
-    """A conversation message."""
+    """
+    A single message in the conversation history.
+
+    Attributes:
+        role: Message role ("user", "assistant", or "system")
+        content: Message text content
+        tool_calls: Optional list of tool calls made by assistant
+        tool_results: Optional list of tool execution results
+    """
     role: str  # "user", "assistant", "system"
     content: str
     tool_calls: list[dict] | None = None
@@ -45,7 +105,19 @@ class Message:
 
 @dataclass
 class ToolResult:
-    """Result of a tool execution."""
+    """
+    Result of executing a tool.
+
+    Encapsulates the outcome of a tool execution, including success/error
+    status and the returned value.
+
+    Attributes:
+        tool_name: Name of the tool that was executed
+        tool_id: Unique ID for this tool execution
+        result: The value returned by the tool handler
+        error: Error message if execution failed
+        is_ui: If True, result is a UI primitive object
+    """
     tool_name: str
     tool_id: str
     result: Any
@@ -55,7 +127,18 @@ class ToolResult:
 
 @dataclass
 class AgentState:
-    """Current state of the agent."""
+    """
+    Current state of a running agent.
+
+    Tracks conversation history, execution status, and token usage.
+
+    Attributes:
+        messages: Conversation history (list of Message objects)
+        is_running: Whether the agent is currently processing
+        current_tool: Name of tool currently being executed (if any)
+        total_input_tokens: Total input tokens used in conversation
+        total_output_tokens: Total output tokens generated in conversation
+    """
     messages: list[Message] = field(default_factory=list)
     is_running: bool = False
     current_tool: str | None = None
@@ -65,7 +148,17 @@ class AgentState:
 
 @dataclass
 class StreamChunk:
-    """A chunk of streamed content."""
+    """
+    A chunk of streaming LLM response.
+
+    Used to incrementally deliver LLM responses as they're generated.
+
+    Attributes:
+        content: Text content of this chunk
+        is_complete: Whether this is the final chunk
+        input_tokens: Input tokens used (included in final chunk)
+        output_tokens: Output tokens generated (included in final chunk)
+    """
     content: str
     is_complete: bool = False
     input_tokens: int | None = None
@@ -74,7 +167,43 @@ class StreamChunk:
 
 @dataclass
 class AppManifest:
-    """Application manifest (from app.yaml)."""
+    """
+    Application manifest loaded from app.yaml.
+
+    Defines app metadata, provider configuration, UI settings, and skills.
+
+    Attributes:
+        name: Application identifier
+        version: Semantic version string
+        description: App description
+        display_name: Display name for UI (falls back to name)
+        icon: Icon emoji for the app
+        tagline: Tagline shown in UI header
+        provider: Default LLM provider ("claude", "openai", "gemini")
+        model: Model identifier (optional, uses provider default if None)
+        max_tokens: Maximum tokens for responses
+        skills: List of skill directory paths to load
+        system_prompt: System prompt defining agent behavior
+        theme: UI theme name
+        welcome_title: Welcome screen title
+        welcome_subtitle: Welcome screen subtitle
+        welcome_features: List of feature bullet points for welcome screen
+        output_directory: Directory for saving outputs
+
+    Example:
+        From app.yaml:
+
+        ```yaml
+        name: my-agent
+        display_name: "My Agent"
+        tagline: "Helpful AI Assistant"
+        provider: claude
+        model: claude-3-5-sonnet-20241022
+        skills:
+          - ./skills/weather
+          - ./skills/calculator
+        ```
+    """
     name: str
     version: str = "1.0.0"
     description: str = ""
@@ -106,7 +235,15 @@ class AppManifest:
 
     @classmethod
     def from_dict(cls, data: dict) -> "AppManifest":
-        """Create from dictionary (parsed YAML)."""
+        """
+        Create AppManifest from parsed YAML dictionary.
+
+        Args:
+            data: Dictionary parsed from app.yaml
+
+        Returns:
+            AppManifest instance with nested values extracted
+        """
         # Extract nested values
         providers = data.get("providers", {})
         default_provider = providers.get("default", "claude")

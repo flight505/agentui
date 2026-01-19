@@ -1,7 +1,22 @@
 """
 Main AgentCore implementation.
 
-Core agent execution engine that delegates to specialized components.
+This module contains the core agent execution engine (AgentCore) that orchestrates
+the agent's main loop, tool execution, message handling, and UI updates.
+
+AgentCore delegates specialized tasks to component classes:
+- ToolExecutor: Executes tools and handles confirmations
+- MessageHandler: Manages conversation state and LLM streaming
+- UIHandler: Renders UI primitives via bridge
+- DisplayToolRegistry: Provides built-in UI display tools
+
+The agent follows this execution flow:
+1. User sends message via UI
+2. MessageHandler streams LLM response
+3. LLM requests tool calls
+4. ToolExecutor executes tools (with confirmation if needed)
+5. Results sent back to LLM
+6. Loop continues until LLM completes response
 """
 
 import asyncio
@@ -30,8 +45,35 @@ class AgentCore:
     """
     Core agent execution engine.
 
-    Manages the agent loop, tool execution, and UI updates.
-    Delegates specialized tasks to component handlers.
+    AgentCore manages the agent's main execution loop, coordinating between
+    the LLM provider, tool execution, and UI rendering. It delegates specialized
+    tasks to component handlers for modularity.
+
+    Attributes:
+        config: Agent configuration (provider, model, prompts)
+        bridge: UI bridge (TUIBridge or CLIBridge)
+        state: Current agent state (messages, tokens, running status)
+        tool_executor: Component that executes tools
+        message_handler: Component that manages LLM streaming
+        ui_handler: Component that renders UI primitives
+        display_tools: Registry of built-in UI display tools
+
+    Example:
+        >>> from agentui.core import AgentCore
+        >>> from agentui.types import AgentConfig
+        >>>
+        >>> config = AgentConfig(provider="claude")
+        >>> core = AgentCore(config=config)
+        >>>
+        >>> # Register a tool
+        >>> from agentui.types import ToolDefinition
+        >>> tool = ToolDefinition(
+        ...     name="greet",
+        ...     description="Say hello",
+        ...     parameters={"type": "object", "properties": {}},
+        ...     handler=lambda: "Hello!"
+        ... )
+        >>> core.register_tool(tool)
     """
 
     def __init__(
@@ -60,11 +102,21 @@ class AgentCore:
         self.display_tools.register_display_tools(self.tool_executor)
 
     def register_tool(self, tool: ToolDefinition) -> None:
-        """Register a tool for the agent to use."""
+        """
+        Register a tool for the agent to use.
+
+        Args:
+            tool: ToolDefinition with name, description, parameters, and handler
+        """
         self.tool_executor.register_tool(tool)
 
     def get_tool_schemas(self) -> list[dict]:
-        """Get tool schemas for the LLM."""
+        """
+        Get tool schemas for the LLM.
+
+        Returns:
+            List of tool schema dictionaries in Anthropic format
+        """
         return self.tool_executor.get_tool_schemas()
 
     @property

@@ -1,7 +1,45 @@
 """
-AgentApp - High-level application wrapper.
+AgentApp - High-level application wrapper for building AI agents.
 
-Provides the simple, decorator-based API for creating agents.
+This module provides the primary API for creating AI agents with AgentUI.
+It offers a decorator-based interface for registering tools and a simple
+async API for running agents with either a TUI or CLI interface.
+
+The AgentApp class handles:
+- LLM provider configuration and initialization
+- Tool registration and management
+- Application manifest loading
+- Bridge lifecycle management (TUI/CLI fallback)
+- Agent execution loop
+
+Example:
+    Basic agent with a custom tool:
+
+    >>> from agentui import AgentApp
+    >>> import asyncio
+    >>>
+    >>> app = AgentApp(name="weather-agent", provider="claude")
+    >>>
+    >>> @app.tool(
+    ...     name="get_weather",
+    ...     description="Get current weather for a city",
+    ...     parameters={
+    ...         "type": "object",
+    ...         "properties": {
+    ...             "city": {"type": "string", "description": "City name"}
+    ...         },
+    ...         "required": ["city"]
+    ...     }
+    ... )
+    ... async def get_weather(city: str):
+    ...     return {"temperature": 72, "conditions": "sunny"}
+    >>>
+    >>> asyncio.run(app.run())
+
+    Loading from manifest:
+
+    >>> app = AgentApp(manifest="./app.yaml")
+    >>> asyncio.run(app.run(prompt="Hello!"))
 """
 
 import logging
@@ -26,20 +64,51 @@ logger = logging.getLogger(__name__)
 
 class AgentApp:
     """
-    Main application class for creating AI agents.
-    
-    Usage:
-        app = AgentApp(name="my-agent", provider="claude")
-        
-        @app.tool(
-            name="get_weather",
-            description="Get current weather",
-            parameters={...}
-        )
-        def get_weather(city: str):
-            return {"temp": 22}
-        
-        asyncio.run(app.run())
+    Main application class for creating AI agents with AgentUI.
+
+    AgentApp provides the high-level API for building AI agents. It manages
+    the agent lifecycle, LLM provider configuration, tool registration, and
+    UI bridge setup. Agents can be configured via code or loaded from a
+    manifest file (app.yaml).
+
+    The class uses a decorator pattern for tool registration and supports
+    both interactive TUI mode and programmatic chat mode.
+
+    Attributes:
+        manifest: Application manifest loaded from app.yaml or provided directly
+        config: Agent configuration (provider, model, prompts, etc.)
+        _core: AgentCore instance (created when run() is called)
+        _bridge: UI bridge instance (TUIBridge or CLIBridge)
+        _tools: List of registered tool definitions
+        _debug: Debug mode flag
+
+    Example:
+        Create and run an agent:
+
+        >>> app = AgentApp(name="my-agent", provider="claude")
+        >>>
+        >>> @app.tool(
+        ...     name="get_weather",
+        ...     description="Get current weather",
+        ...     parameters={
+        ...         "type": "object",
+        ...         "properties": {
+        ...             "city": {"type": "string"}
+        ...         },
+        ...         "required": ["city"]
+        ...     }
+        ... )
+        ... def get_weather(city: str):
+        ...     return {"temp": 22, "conditions": "sunny"}
+        >>>
+        >>> asyncio.run(app.run())
+
+        Programmatic chat mode:
+
+        >>> app = AgentApp(provider="openai", model="gpt-4")
+        >>> response = asyncio.run(app.chat("What is 2+2?"))
+        >>> print(response)
+        '2 + 2 equals 4.'
     """
 
     def __init__(
@@ -58,19 +127,41 @@ class AgentApp:
     ):
         """
         Initialize the agent application.
-        
+
+        Creates a new agent with the specified configuration. If a manifest
+        is provided, configuration values are loaded from it and merged with
+        constructor arguments (constructor args take precedence).
+
         Args:
-            name: Application name
-            manifest: Path to app.yaml or AppManifest object
-            provider: LLM provider ("claude", "openai")
-            model: Model name (uses provider default if not specified)
-            api_key: API key (uses env var if not specified)
-            max_tokens: Max tokens for responses
-            temperature: Temperature for generation
-            system_prompt: System prompt for the agent
-            theme: UI theme name
-            tagline: Tagline shown in UI header
-            debug: Enable debug logging
+            name: Application name used for identification
+            manifest: Path to app.yaml file, directory containing app.yaml,
+                or an AppManifest object. If provided, loads configuration
+                from the manifest.
+            provider: LLM provider name ("claude", "openai", "gemini")
+            model: Model identifier. If None, uses provider default
+                (e.g., "claude-3-5-sonnet-20241022" for Claude)
+            api_key: API key for the LLM provider. If None, reads from
+                environment variables (ANTHROPIC_API_KEY, OPENAI_API_KEY, etc.)
+            max_tokens: Maximum tokens for LLM responses
+            temperature: Temperature for generation (0.0-1.0). Higher values
+                produce more random outputs
+            system_prompt: System prompt that defines agent behavior. If None,
+                uses manifest system_prompt or default
+            theme: UI theme name for the TUI (e.g., "catppuccin-mocha", "charm-dark")
+            tagline: Tagline displayed in the UI header
+            debug: Enable debug logging to stderr
+
+        Raises:
+            FileNotFoundError: If manifest path is provided but file doesn't exist
+
+        Example:
+            >>> app = AgentApp(
+            ...     name="assistant",
+            ...     provider="claude",
+            ...     model="claude-3-5-sonnet-20241022",
+            ...     system_prompt="You are a helpful coding assistant.",
+            ...     debug=True
+            ... )
         """
         if debug:
             logging.basicConfig(level=logging.DEBUG)
@@ -106,7 +197,18 @@ class AgentApp:
         self._tools: list[ToolDefinition] = []
 
     def _load_manifest(self, path: str | Path) -> AppManifest:
-        """Load manifest from file."""
+        """
+        Load application manifest from YAML file.
+
+        Args:
+            path: Path to app.yaml file or directory containing it
+
+        Returns:
+            Parsed AppManifest object
+
+        Raises:
+            FileNotFoundError: If the manifest file doesn't exist
+        """
         path = Path(path)
 
         if path.is_dir():
@@ -121,7 +223,15 @@ class AgentApp:
         return AppManifest.from_dict(data)
 
     def _get_api_key(self, provider: str) -> str | None:
-        """Get API key from environment."""
+        """
+        Get API key from environment variables.
+
+        Args:
+            provider: Provider name ("claude", "openai", "gemini")
+
+        Returns:
+            API key from environment, or None if not found
+        """
         env_vars = {
             "claude": "ANTHROPIC_API_KEY",
             "openai": "OPENAI_API_KEY",
@@ -188,17 +298,63 @@ class AgentApp:
     ) -> Callable:
         """
         Decorator for tools that return UI primitives.
-        
-        Shorthand for @tool(..., is_ui_tool=True)
+
+        Convenience decorator for registering tools that return UI components
+        (UITable, UIForm, UICode, etc.) instead of plain data. Equivalent to
+        using @tool(..., is_ui_tool=True).
+
+        Args:
+            name: Tool name (used by LLM)
+            description: Tool description (shown to LLM)
+            parameters: JSON schema for parameters
+
+        Returns:
+            Decorator function
+
+        Example:
+            >>> @app.ui_tool(
+            ...     name="show_results",
+            ...     description="Display search results in a table",
+            ...     parameters={
+            ...         "type": "object",
+            ...         "properties": {
+            ...             "results": {"type": "array"}
+            ...         }
+            ...     }
+            ... )
+            ... async def show_results(results: list):
+            ...     from agentui.primitives import UITable
+            ...     return UITable(
+            ...         columns=["Name", "Score"],
+            ...         rows=[[r["name"], str(r["score"])] for r in results]
+            ...     )
         """
         return self.tool(name, description, parameters, is_ui_tool=True)
 
     async def run(self, prompt: str | None = None) -> None:
         """
-        Run the agent application.
-        
+        Run the agent application in interactive mode.
+
+        Starts the agent with a TUI interface (or CLI fallback if TUI binary
+        is unavailable). The agent runs in a loop, processing user messages
+        and executing tools until the user exits.
+
+        This method manages the complete lifecycle:
+        1. Initializes the UI bridge (TUI or CLI)
+        2. Creates the AgentCore
+        3. Registers all tools
+        4. Processes initial prompt if provided
+        5. Runs the main event loop until user exits
+
         Args:
-            prompt: Optional initial prompt to send
+            prompt: Optional initial message to send to the agent. If provided,
+                the agent processes this message before entering interactive mode.
+
+        Example:
+            >>> app = AgentApp(name="assistant", provider="claude")
+            >>> await app.run()  # Interactive mode
+
+            >>> await app.run(prompt="Analyze this codebase")  # With initial prompt
         """
         tui_config = TUIConfig(
             theme=self.config.theme,
@@ -235,15 +391,32 @@ class AgentApp:
 
     async def chat(self, message: str) -> str:
         """
-        Send a single message and get a response.
-        
-        Useful for programmatic use without the TUI.
-        
+        Send a single message and get a text response (no UI).
+
+        Provides a programmatic API for interacting with the agent without
+        launching the TUI. Useful for scripting, testing, or embedding
+        agents in other applications.
+
+        This method creates an AgentCore if needed and maintains conversation
+        history across multiple calls. Tool execution is supported but UI
+        primitives are not rendered (only their text representation is included).
+
         Args:
-            message: User message
-            
+            message: User message to send to the agent
+
         Returns:
-            Assistant response
+            Complete text response from the agent
+
+        Example:
+            >>> app = AgentApp(provider="claude")
+            >>> response = await app.chat("What is the capital of France?")
+            >>> print(response)
+            'The capital of France is Paris.'
+
+            >>> # Conversation context is maintained
+            >>> response2 = await app.chat("What is its population?")
+            >>> print(response2)
+            'Paris has a population of approximately 2.2 million people...'
         """
         if not self._core:
             self._core = AgentCore(config=self.config)
